@@ -1,1 +1,54 @@
 name: ZenPacks.community.ISAM
+
+zProperties:
+  zISAMUsername:
+    category: ISAM
+
+  zISAMPassword:
+    category: ISAM
+    type: password
+
+classes:
+  ISAMDevice:
+    base: [zenpacklib.Device]
+    label: ISAM Device
+    properties:
+      model:
+        type: string
+        label: Model
+
+  ISAMReverseProxy:
+    base: [zenpacklib.Component]
+    label: ISAM Reverse Proxy
+    properties:
+      started:
+        type: string
+        label: Started
+      enabled:
+        type: string
+        label: Enabled
+
+device_classes:
+  /Security/ISAM:
+    zProperties:
+      zPythonClass: ZenPacks.community.ISAM.ISAMDevice
+      zSnmpMonitorIgnore: true
+      zCollectorPlugins:
+        - zenoss.snmp.NewDeviceMap
+        - zenoss.snmp.DeviceMap
+        - zenoss.snmp.SnmpV3EngineIdMap
+        - zenoss.snmp.InterfaceMap
+        - zenoss.snmp.RouteMap
+        - zenoss.snmp.HRFileSystemMap
+        - zenoss.snmp.HRSWRunMap
+        - zenoss.snmp.HRSWInstalledMap
+        - zenoss.snmp.HSRPMap
+        - zenoss.snmp.CpuMap
+        - zenoss.snmp.IpServiceMap
+        - community.json.RProxies
+      zDeviceTemplates:
+        - Device
+
+
+class_relationships:
+  - ISAMDevice 1:MC ISAMReverseProxy

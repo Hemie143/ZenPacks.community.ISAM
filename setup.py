@@ -4,8 +4,8 @@
 # NB: PACKAGES is deprecated
 NAME = "ZenPacks.community.ISAM"
 VERSION = "1.0.0dev"
-AUTHOR = "Your Name Here"
-LICENSE = ""
+AUTHOR = "Laurent Hemeryck"
+LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']
 PACKAGES = ['ZenPacks', 'ZenPacks.community', 'ZenPacks.community.ISAM']
 INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib']
