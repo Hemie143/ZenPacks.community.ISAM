@@ -45,7 +45,7 @@ device_classes:
         - zenoss.snmp.HSRPMap
         - zenoss.snmp.CpuMap
         - zenoss.snmp.IpServiceMap
-        - community.json.RProxies
+        - community.json.ISAM
       zDeviceTemplates:
         - Device
 

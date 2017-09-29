@@ -11,7 +11,7 @@ from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 
 import base64
 
-class RProxies(PythonPlugin):
+class ISAMModeler(PythonPlugin):
 
     #relname = 'iSAMReverseProxys'
     relname = 'isamreverseProxys'
@@ -28,7 +28,6 @@ class RProxies(PythonPlugin):
     @inlineCallbacks
     def collect(self, device, log):
         log.info('{}: ***collecting data***'.format(device.id))
-        rm = self.relMap()
 
         username = getattr(device, 'zISAMUsername', None)
         password = getattr(device, 'zISAMPassword', None)
@@ -56,7 +55,14 @@ class RProxies(PythonPlugin):
             log.error('{}: {}'.format(device.id, e))
             returnValue(None)
 
-        for result in response:
+        log.info('Collected: {}'.format(response))
+        returnValue(response)
+
+    def process(self, device, results, log):
+        log.info('{}: ***processing data***'.format(device.id))
+
+        rm = self.relMap()
+        for result in results:
             rm.append(self.objectMap({
                 'id': self.prepId(result['instance_name']),
                 'title': result['instance_name'],
@@ -64,8 +70,5 @@ class RProxies(PythonPlugin):
                 'enabled': result['enabled'],
             }))
 
-        log.info('Collected: {}'.format(rm))
-        returnValue(rm)
-
-    def process(self, device, results, log):
-        return results
+        log.info('{}: ***processed***:{}'.format(device.id, rm))
+        return rm
