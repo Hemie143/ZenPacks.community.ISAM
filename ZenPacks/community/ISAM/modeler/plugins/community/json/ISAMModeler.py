@@ -1,9 +1,10 @@
 # stdlib Imports
 import json
-import urllib
+#import urllib
 
 # Twisted Imports
-from twisted.internet.defer import inlineCallbacks, returnValue
+#from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, returnValue, DeferredSemaphore, DeferredList
 from twisted.web.client import getPage
 
 # Zenoss Imports
@@ -38,37 +39,51 @@ class ISAMModeler(PythonPlugin):
             log.error("%s: IP Address cannot be empty", device.id)
             returnValue(None)
 
-        rproxy_url = 'https://{}/reverseproxy'.format(ip_address)
+        urls = [
+            'https://{}/reverseproxy'.format(ip_address),
+            ]
+
         basicAuth = base64.encodestring('{}:{}'.format(username, password))
         authHeader = "Basic " + basicAuth.strip()
-        try:
-            response = yield getPage(
-                rproxy_url,
-                headers={
-                    "Accept": "application/json",
-                    "Authorization": authHeader,
-                    },
-            )
-            response = json.loads(response)
-            log.info('Collect response for {}: {}'.format(device.id, response))
-        except Exception, e:
-            log.error('{}: {}'.format(device.id, e))
-            returnValue(None)
 
-        log.info('Collected: {}'.format(response))
-        returnValue(response)
+        deferreds = []
+        sem = DeferredSemaphore(1)
+        for url in urls:
+            d = sem.run(getPage, url,
+                        headers={
+                            "Accept": "application/json",
+                            "Authorization": authHeader,
+                        },
+                        )
+            deferreds.append(d)
+
+            # callbacks ?
+
+        results = yield DeferredList(deferreds, consumeErrors=True)
+        for success, result in results:
+            if not success:
+                log.error('{}: {}'.format(device.id, result.getErrorMessage()))
+                returnValue(None)
+
+        log.info('Collected: {}'.format(results))
+        returnValue(results)
 
     def process(self, device, results, log):
         log.info('{}: ***processing data***'.format(device.id))
 
         rm = self.relMap()
-        for result in results:
-            rm.append(self.objectMap({
-                'id': self.prepId(result['instance_name']),
-                'title': result['instance_name'],
-                'started': result['started'],
-                'enabled': result['enabled'],
-            }))
+        for success, result in results:
+            if success:
+                log.info('Result: {}'.format(result))
+                result = json.loads(result)
+                log.info('Result JSON: {}'.format(result))
+                for r in result:
+                    rm.append(self.objectMap({
+                        'id': self.prepId(r['instance_name']),
+                        'title': r['instance_name'],
+                        'started': r['started'],
+                        'enabled': r['enabled'],
+                    }))
 
         log.info('{}: ***processed***:{}'.format(device.id, rm))
         return rm
