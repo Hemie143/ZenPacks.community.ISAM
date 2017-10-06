@@ -14,10 +14,6 @@ import base64
 
 class ISAMModeler(PythonPlugin):
 
-    # relname = 'isamreverseProxys'
-    # TODO : change the relationship name, or at least rename, ending with Proxies
-    # modname = 'ZenPacks.community.ISAM.ISAMReverseProxy'
-
     requiredProperties = (
         'zISAMUsername',
         'zISAMPassword',
@@ -25,19 +21,14 @@ class ISAMModeler(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + requiredProperties
 
-    # rproxies & junction from health.json
-    # interfaces
     # firmware ??
     components = [
         ['ifaces', 'https://{}/net/ifaces'],
         ['health', 'https://{}/wga/widgets/health.json'],
         ]
 
-    def add_rel(self, result, label):
-        print('We got:{}'.format(result))
-
-        # return dict([(test, result)])
-
+    @staticmethod
+    def add_tag(result, label):
         return tuple((label, result))
 
     @inlineCallbacks
@@ -46,12 +37,6 @@ class ISAMModeler(PythonPlugin):
 
         username = getattr(device, 'zISAMUsername', None)
         password = getattr(device, 'zISAMPassword', None)
-
-        # curl -s -S -k -H "Accept:application/json" --user cs_monitoring:zenoss https://10.0.50.142/reverseproxy
-        # curl -s -S -k -H "Accept:application/json" --user cs_monitoring:zenoss "https://10.0.50.142/analysis/reverse_proxy_traffic/reqtime?duration=1&date=1506902400&instance=intranet"
-        # curl -s -S -k -H "Accept:application/json" --user cs_monitoring:zenoss https://10.0.50.142/wga/widgets/health.json
-        # curl -s -S -k -H "Accept:application/json" --user cs_monitoring:zenoss https://10.0.50.142/net/ifaces
-        # curl -s -S -k -H "Accept:application/json" --user cs_monitoring:zenoss https://10.0.50.142/firmware_settings
 
         ip_address = device.manageIp
         if not ip_address:
@@ -71,7 +56,7 @@ class ISAMModeler(PythonPlugin):
                             "Authorization": authHeader,
                             },
                         )
-            d.addCallback(self.add_rel, comp[0])
+            d.addCallback(self.add_tag, comp[0])
             deferreds.append(d)
 
         results = yield DeferredList(deferreds, consumeErrors=True)
@@ -91,7 +76,7 @@ class ISAMModeler(PythonPlugin):
             - An ObjectMap, for the device device information
             - A list of RelationshipMaps and ObjectMaps, both
         """
-        log.info('{}: ***processing data***'.format(device.id))
+        #log.info('{}: ***processing data***'.format(device.id))
 
         self.result_data = {}
         for success, result in results:
@@ -101,36 +86,24 @@ class ISAMModeler(PythonPlugin):
 
         maps = []
         maps.extend(self.get_reverse_proxies(log))
+        maps.append(self.get_ifaces(log))
 
         log.info('{}: ***processed***:{}'.format(device.id, maps))
         return maps
 
     def get_reverse_proxies(self, log):
-
         data = self.result_data.get('health').get('items')
-
-        log.info('rProxy data: {}'.format(data))
-
         rproxy_maps = []
-
         rm_junctions = []
-
         rm = []
-
         for r in data:
+            # Reverse Proxy ObjectMap
             om_rproxy = ObjectMap()
             om_rproxy.id = self.prepId(r['name'])
             om_rproxy.title = r['name']
             rproxy_maps.append(om_rproxy)
-            '''
-            rm.append(RelationshipMap(relname='isamreverseProxys',
-                                      modname='ZenPacks.community.ISAM.ISAMReverseProxy',
-                                      compname='',
-                                      objmaps=[om_rproxy]))
-            '''
-
+            # Junction RelationshipMaps
             compname = 'isamreverseProxys/{}'.format(om_rproxy.id)
-
             junction_maps = []
             rproxy_junctions = r['children']
             for j in rproxy_junctions:
@@ -144,38 +117,31 @@ class ISAMModeler(PythonPlugin):
                                                 objmaps=junction_maps
                                                 ))
 
-            '''
-            rproxy_maps.append(ObjectMap({
-                'id': self.prepId(r['name']),
-                'title': r['name'],
-            }))
-            '''
-
-        log.info('RProxies: {}'.format(rproxy_maps))
-
-        # also return junctions ?
-
         rm.append(RelationshipMap(relname='isamreverseProxys',
                                     modname='ZenPacks.community.ISAM.ISAMReverseProxy',
                                     compname='',
                                     objmaps=rproxy_maps))
-        '''
-        rm_junction = RelationshipMap(relname='isamjunctions',
-                                      modname='ZenPacks.community.ISAM.ISAMJunction',
-                                      objmaps=junction_maps)
-        '''
-
-        # log.info('Junctions: {}'.format(rm_junctions))
-        # log.info('rm_rproxy1: {}'.format(rm_rproxy))
-        # log.info('rm_rproxy1b: {}'.format((rm_rproxy)))
-        #rm_rproxy.extend(rm_junctions)
-        # log.info('rm_rproxy2: {}'.format(rm_rproxy))
-        # log.info('rm_rproxy3: {}'.format((rm_rproxy)))
-        log.info('rm: {}'.format((rm)))
-        log.info('rm_junctions: {}'.format((rm_junctions)))
         rm.extend(rm_junctions)
+        return rm
 
-        # return [rm_rproxy, rm_junction]
-
-        # return rm_rproxy
+    def get_ifaces(self, log):
+        data = self.result_data.get('ifaces').get('interfaces')
+        log.info('ifaces: {}'.format(data))
+        if_maps = []
+        for iface in data:
+            om_if = ObjectMap()
+            name = iface.get('label')
+            om_if.id = self.prepId(name)
+            om_if.title = name
+            om_if.enabled = iface.get('enabled')
+            address_list = []
+            addresses = iface.get('ipv4').get('addresses')
+            for address in addresses:
+                address_list.append(address.get('address'))
+            om_if.ipv4 = ','.join(address_list)
+            if_maps.append(om_if)
+        rm = RelationshipMap(relname='isaminterfaces',
+                             modname='ZenPacks.community.ISAM.ISAMInterface',
+                             compname='',
+                             objmaps=if_maps)
         return rm
