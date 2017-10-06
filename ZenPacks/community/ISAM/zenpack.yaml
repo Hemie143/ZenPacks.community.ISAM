@@ -28,6 +28,14 @@ classes:
         type: string
         label: Enabled
 
+  ISAMJunction:
+    base: [zenpacklib.Component]
+    label: ISAM Junction
+    properties:
+      rp_name:
+        type: string
+        label: Reverse Proxy Name
+
 device_classes:
   /Security/ISAM:
     zProperties:
@@ -52,3 +60,4 @@ device_classes:
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy
+  - ISAMReverseProxy 1:MC ISAMJunction
