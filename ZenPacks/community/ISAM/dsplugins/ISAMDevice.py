@@ -135,15 +135,18 @@ class ISAMDevice(PythonDataSourcePlugin):
         for datasource in config.datasources:
             for point in datasource.points:
                 # TODO: handle failures, try except and fill in data['events']
-                # TODO: Transform values (megabytes to bytes)
-                value = float(ds_data[datasource.datasource][point.id])
-                if datasource.datasource in ['memory']:
-                    value *= 1024*1024
+                # TODO Following isn't that nice...
+                if datasource.datasource == 'memory' and point.dpName == 'memory_used_perc':
+                    value = float(ds_data['memory']['used'])/float(ds_data['memory']['total'])*100
+                else:
+                    value = float(ds_data[datasource.datasource][point.id])
+                    if datasource.datasource in ['memory']:
+                        value *= 1024*1024
                 data['values'][None][point.dpName] = (value, 'N')
 
         return data
 
     def onError(self, result, config):
-        log.info('Error - result is {}'.format(result))
+        log.error('Error - result is {}'.format(result))
         # TODO: send event of collection failure
         return {}

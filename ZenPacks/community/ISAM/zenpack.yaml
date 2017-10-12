@@ -104,25 +104,45 @@ device_classes:
               used: GAUGE
               free: GAUGE
               total: GAUGE
+              used_perc: GAUGE
 
         graphs:
           CPU:
             units: percent
+            width: 1000
 
             graphpoints:
               User CPU percentage:
                 dpName: cpu_user_cpu
+                lineType: AREA
               System CPU percentage:
                 dpName: cpu_system_cpu
+                lineType: AREA
+                stacked: true
               Idle CPU percentage:
                 dpName: cpu_idle_cpu
+                lineType: AREA
+                stacked: true
 
           Memory:
             units: bytes
+            width: 1000
+            miny: 0
+            base: true
 
             graphpoints:
               Memory usage (MB):
                 dpName: memory_used
+
+          Memory Percentage:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+
+            graphpoints:
+              Memory usage (percentage):
+                dpName: memory_used_perc
 
       ISAMReverseProxy:
         datasources:
@@ -145,17 +165,24 @@ device_classes:
         graphs:
           Status:
             units: percent
+            width: 1000
+            miny: 0
+            maxy: 2
 
             graphpoints:
               status:
                 dpName: status_status
 
+
           Throughput:
             units: requests
+            width: 1000
+            miny: 0
 
             graphpoints:
               requests:
                 dpName: throughput_requests
+                cFunc: LAST
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy

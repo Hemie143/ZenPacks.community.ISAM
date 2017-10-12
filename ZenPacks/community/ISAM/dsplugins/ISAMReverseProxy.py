@@ -3,6 +3,7 @@
 import json
 import logging
 import base64
+import time
 
 # Twisted Imports
 from twisted.internet.defer import returnValue
@@ -15,12 +16,15 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonD
 log = logging.getLogger('zen.PythonISAMReverseProxy')
 
 
-class RPStatus(PythonDataSourcePlugin):
+class ISAMReverseProxy(PythonDataSourcePlugin):
 
     proxy_attributes = (
         'zISAMUsername',
         'zISAMPassword',
         )
+
+    def ws_url_get(config):
+        return
 
     @classmethod
     def config_key(cls, datasource, context):
@@ -87,13 +91,8 @@ class RPStatus(PythonDataSourcePlugin):
         log.debug('Starting ISAM Reverse Proxy collect')
         log.debug('config:{}'.format(config.__dict__))
 
-        ip_address = config.manageIp
-        if not ip_address:
-            log.error("%s: IP Address cannot be empty", device.id)
-            returnValue(None)
-
         ds0 = config.datasources[0]
-        url = 'https://{}/wga/widgets/health.json'.format(ip_address)
+        url = self.ws_url_get(config)
         basicAuth = base64.encodestring('{}:{}'.format(ds0.zISAMUsername, ds0.zISAMPassword))
         authHeader = "Basic " + basicAuth.strip()
         d = getPage(url,
@@ -104,6 +103,22 @@ class RPStatus(PythonDataSourcePlugin):
                         }
                     )
         return d
+
+    def onError(self, result, config):
+        log.error('Error - result is {}'.format(result))
+        # TODO: send event of collection failure
+        return {}
+
+
+class RPStatus(ISAMReverseProxy):
+
+    def ws_url_get(self, config):
+        ip_address = config.manageIp
+        if not ip_address:
+            log.error("%s: IP Address cannot be empty", device.id)
+            returnValue(None)
+        url = 'https://{}/wga/widgets/health.json'.format(ip_address)
+        return url
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
@@ -119,8 +134,37 @@ class RPStatus(PythonDataSourcePlugin):
             # TODO: event
         return data
 
-    def onError(self, result, config):
-        log.info('Error - result is {}'.format(result))
-        # TODO: send event of collection failure
-        return {}
+
+class RPThroughput(ISAMReverseProxy):
+
+    def ws_url_get(self, config):
+        ip_address = config.manageIp
+        if not ip_address:
+            log.error("%s: IP Address cannot be empty", device.id)
+            returnValue(None)
+        cycletime = config.datasources[0].cycletime
+        now_time = int(time.time())
+        start_time = now_time - 3 * cycletime
+        # midnight = int(now_time - now_time % 86400)
+        url = 'https://{}/analysis/reverse_proxy_traffic/throughput_widget?date={}&duration={}'.format(ip_address,
+                                                                                                    start_time,
+                                                                                                    86400)
+        log.info('URL: {}'.format(url))
+        return url
+
+    def onSuccess(self, result, config):
+        log.debug('Success - result is {}'.format(result))
+
+        # result = json.loads(result)
+        #items = result.get('items')
+        data = self.new_data()
+        '''
+        for rproxy in items:
+            component = rproxy['name']
+            value = rproxy['health']
+            data['values'][component]['status'] = (value, 'N')
+            # TODO: event
+        '''
+        return data
+
 
