@@ -25,6 +25,7 @@ class ISAMModeler(PythonPlugin):
     components = [
         ['ifaces', 'https://{}/net/ifaces'],
         ['health', 'https://{}/wga/widgets/health.json'],
+        ['storage', 'https://{}/statistics/systems/storage.json?timespan=600s'],
         ]
 
     @staticmethod
@@ -54,7 +55,8 @@ class ISAMModeler(PythonPlugin):
                         headers={
                             "Accept": "application/json",
                             "Authorization": authHeader,
-                            },
+                            "User-Agent": "Mozilla/3.0Gold",
+                        },
                         )
             d.addCallback(self.add_tag, comp[0])
             deferreds.append(d)
@@ -87,6 +89,7 @@ class ISAMModeler(PythonPlugin):
         maps = []
         maps.extend(self.get_reverse_proxies(log))
         maps.append(self.get_ifaces(log))
+        maps.append(self.get_filesystems(log))
 
         log.info('{}: ***processed***:{}'.format(device.id, maps))
         return maps
@@ -126,7 +129,6 @@ class ISAMModeler(PythonPlugin):
 
     def get_ifaces(self, log):
         data = self.result_data.get('ifaces').get('interfaces')
-        log.info('ifaces: {}'.format(data))
         if_maps = []
         for iface in data:
             om_if = ObjectMap()
@@ -144,4 +146,22 @@ class ISAMModeler(PythonPlugin):
                              modname='ZenPacks.community.ISAM.ISAMInterface',
                              compname='',
                              objmaps=if_maps)
+        return rm
+
+    def get_filesystems(self, log):
+        data = self.result_data.get('storage')
+
+        fs_maps = []
+        default_fs = ['root', 'boot']
+        for fs in default_fs:
+            if fs in data:
+                om_fs = ObjectMap()
+                om_fs.id = self.prepId(fs)
+                om_fs.title = fs
+                om_fs.size = int(1024*1024*float(data[fs]['size']))
+                fs_maps.append(om_fs)
+        rm = RelationshipMap(relname='isamfileSystems',
+                             modname='ZenPacks.community.ISAM.ISAMFileSystem',
+                             compname='',
+                             objmaps=fs_maps)
         return rm

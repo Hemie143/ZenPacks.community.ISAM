@@ -21,6 +21,9 @@ classes:
     base: [zenpacklib.Component]
     label: ISAM Reverse Proxy
     properties:
+      status:
+        type: string
+        label: Status
       started:
         type: string
         label: Started
@@ -47,6 +50,14 @@ classes:
         type: string
         label: IPv4 address
 
+  ISAMFileSystem:
+    base: [zenpacklib.Component]
+    label: File System
+    properties:
+      size:
+        label: Size
+        renderer: Zenoss.render.bytesString
+
 device_classes:
   /Security/ISAM:
     zProperties:
@@ -67,9 +78,87 @@ device_classes:
         - community.json.ISAM
       zDeviceTemplates:
         - Device
+        - ISAMDevice
 
+    templates:
+      ISAMDevice:
+        targetPythonClass: ZenPacks.community.ISAM.ISAMDevice
+
+        datasources:
+          cpu:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMDevice.ISAMDevice
+            cycletime: 60
+
+            datapoints:
+              user_cpu: GAUGE
+              system_cpu: GAUGE
+              idle_cpu: GAUGE
+
+          memory:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMDevice.ISAMDevice
+            cycletime: 60
+
+            datapoints:
+              used: GAUGE
+              free: GAUGE
+              total: GAUGE
+
+        graphs:
+          CPU:
+            units: percent
+
+            graphpoints:
+              User CPU percentage:
+                dpName: cpu_user_cpu
+              System CPU percentage:
+                dpName: cpu_system_cpu
+              Idle CPU percentage:
+                dpName: cpu_idle_cpu
+
+          Memory:
+            units: bytes
+
+            graphpoints:
+              Memory usage (MB):
+                dpName: memory_used
+
+      ISAMReverseProxy:
+        datasources:
+          status:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMReverseProxy.RPStatus
+            cycletime: 60
+
+            datapoints:
+              status: GAUGE
+
+          throughput:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMReverseProxy.RPThroughput
+            cycletime: 60
+
+            datapoints:
+              requests: GAUGE
+
+        graphs:
+          Status:
+            units: percent
+
+            graphpoints:
+              status:
+                dpName: status_status
+
+          Throughput:
+            units: requests
+
+            graphpoints:
+              requests:
+                dpName: throughput_requests
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy
   - ISAMDevice 1:MC ISAMInterface
+  - ISAMDevice 1:MC ISAMFileSystem
   - ISAMReverseProxy 1:MC ISAMJunction
