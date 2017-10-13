@@ -157,14 +157,13 @@ device_classes:
           throughput:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMReverseProxy.RPThroughput
-            cycletime: 60
+            cycletime: 600
 
             datapoints:
               requests: GAUGE
 
         graphs:
           Status:
-            units: percent
             width: 1000
             miny: 0
             maxy: 2
@@ -182,7 +181,6 @@ device_classes:
             graphpoints:
               requests:
                 dpName: throughput_requests
-                cFunc: LAST
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy

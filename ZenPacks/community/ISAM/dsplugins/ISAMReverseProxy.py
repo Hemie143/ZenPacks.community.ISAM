@@ -14,7 +14,7 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonD
 
 # Setup logging
 log = logging.getLogger('zen.PythonISAMReverseProxy')
-
+isam_cycle = 600
 
 class ISAMReverseProxy(PythonDataSourcePlugin):
 
@@ -142,29 +142,68 @@ class RPThroughput(ISAMReverseProxy):
         if not ip_address:
             log.error("%s: IP Address cannot be empty", device.id)
             returnValue(None)
-        cycletime = config.datasources[0].cycletime
-        now_time = int(time.time())
-        start_time = now_time - 3 * cycletime
+        # Data is sampled every 10 minutes on the ISAM device
+        # isam_cycle = 600
+
+        # cycletime = config.datasources[0].cycletime
+        now_time = int(time.time())     # Time in GMT, as on device
+        # start_time = now_time - 5 * cycletime
+        start_time = int(now_time - now_time % isam_cycle) - isam_cycle
+        log.info('time_10: {}'.format(start_time))
         # midnight = int(now_time - now_time % 86400)
         url = 'https://{}/analysis/reverse_proxy_traffic/throughput_widget?date={}&duration={}'.format(ip_address,
-                                                                                                    start_time,
-                                                                                                    86400)
+                                                                                                       start_time,
+                                                                                                       3*isam_cycle)
         log.info('URL: {}'.format(url))
         return url
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
 
-        # result = json.loads(result)
+        result = json.loads(result)
         #items = result.get('items')
         data = self.new_data()
+        now_time = time.time()  # Time in GMT, as on device
+        current_window_start = now_time - now_time % isam_cycle
+        prev_window_start = current_window_start - isam_cycle
+        log.info('now time       rrd: {}'.format(now_time))
+        log.info('current window rrd: {}'.format(current_window_start))
+        log.info('prev    window rrd: {}'.format(prev_window_start))
+
+        for rproxy in result:
+            component = rproxy['instance']
+            # records could be a dictionary, not a list ???
+            # records holds values collected for each window of 10 minutes
+            # the current window sees its value raising during the current interval of 10 minutes
+            # this means that the current window has its value reset every 10 minutes
+            records = rproxy['records']
+            log.info('records: {}'.format(records))
+            if records == 0:
+                # data['values'][component]['requests'] = (0, rproxy['start_time'])
+                data['values'][component]['requests'] = (0, 'N')
+            else:
+                # TODO: keep only most recent poll ?
+                for poll in rproxy['records']:
+                    # data['values'][component]['requests'] = (poll['e'], poll['t'])
+                    poll_time =float(poll['t'])
+                    if poll_time == prev_window_start:
+                        log.info('prev window start rrd')
+                        # log.info('timestamp rrd for {}: {}'.format(component, poll_time))
+                        # TODO : change timestamp : N, now_time & prev_window_start
+                        data['values'][component]['requests'] = (poll['e'], 'N')
+                        break
+
+        '''    *   start_time - Integer - Start time as given in query
+    *   instance - String - Reverse Proxy instance name
+    *   offset - Integer - ???
+    *   total_hits - Integer - Number of hits since start time
+    *   tzname - String - Timezone: "GMT"
+    *   bucket_size - Integer - interval duration ???
+    *   records - Dictionary or list of dictionary
+        * t - Integer - timestamp
+        * e - Integer - number of hits during interval ???
         '''
-        for rproxy in items:
-            component = rproxy['name']
-            value = rproxy['health']
-            data['values'][component]['status'] = (value, 'N')
-            # TODO: event
-        '''
+
         return data
 
 
