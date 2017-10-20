@@ -34,20 +34,6 @@ class ISAMDevice(PythonDataSourcePlugin):
 
     @classmethod
     def config_key(cls, datasource, context):
-        """
-        Return a tuple defining collection uniqueness.
-
-        This is a classmethod that is executed in zenhub. The datasource and
-        context parameters are the full objects.
-
-        This example implementation is the default. Split configurations by
-        device, cycle time, template id, datasource id and the Python data
-        source's plugin class name.
-
-        You can omit this method from your implementation entirely if this
-        default uniqueness behavior fits your needs. In many cases it will.
-        """
-
         log.debug(
             'In config_key context.device().id is %s datasource.getCycleTime(context) is %s datasource.rrdTemplate().id is %s datasource.id is %s datasource.plugin_classname is %s  ' % (
             context.device().id, datasource.getCycleTime(context), datasource.rrdTemplate().id, datasource.id,
@@ -62,40 +48,13 @@ class ISAMDevice(PythonDataSourcePlugin):
 
     @classmethod
     def params(cls, datasource, context):
-        """
-        Return params dictionary needed for this plugin.
-
-        This is a classmethod that is executed in zenhub. The datasource and
-        context parameters are the full objects.
-
-        You have access to the dmd object database here and any attributes
-        and methods for the context (either device or component).
-
-        You can omit this method from your implementation if you don't require
-        any additional information on each of the datasources of the config
-        parameter to the collect method below. If you only need extra
-        information at the device level it is easier to just use
-        proxy_attributes as mentioned above.
-        """
         log.debug('Starting ISAMDevice params')
         params = {}
         log.debug(' params is %s \n' % (params))
         return params
 
     def collect(self, config):
-        """
-        No default collect behavior. You must implement this method.
-
-        This method must return a Twisted deferred. The deferred results will
-        be sent to the onResult then either onSuccess or onError callbacks
-        below.
-
-        This method really is run by zenpython daemon. Check zenpython.log
-        for any log messages.
-        """
-
         log.debug('Starting ISAM Device collect')
-        log.debug('config:{}'.format(config.__dict__))
 
         ip_address = config.manageIp
         if not ip_address:
@@ -118,7 +77,6 @@ class ISAMDevice(PythonDataSourcePlugin):
                         )
             d.addCallback(self.add_tag, datasource.datasource)
             deferreds.append(d)
-
         return DeferredList(deferreds)
 
     def onSuccess(self, result, config):

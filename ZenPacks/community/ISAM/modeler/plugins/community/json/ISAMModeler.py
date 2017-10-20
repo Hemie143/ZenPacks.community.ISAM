@@ -21,7 +21,7 @@ class ISAMModeler(PythonPlugin):
 
     deviceProperties = PythonPlugin.deviceProperties + requiredProperties
 
-    # firmware ??
+    # TODO : firmware and additional data ?
     components = [
         ['ifaces', 'https://{}/net/ifaces'],
         ['health', 'https://{}/wga/widgets/health.json'],
@@ -34,7 +34,7 @@ class ISAMModeler(PythonPlugin):
 
     @inlineCallbacks
     def collect(self, device, log):
-        log.info('{}: ***collecting data***'.format(device.id))
+        log.debug('{}: Modeling collect'.format(device.id))
 
         username = getattr(device, 'zISAMUsername', None)
         password = getattr(device, 'zISAMPassword', None)
@@ -67,7 +67,7 @@ class ISAMModeler(PythonPlugin):
                 log.error('{}: {}'.format(device.id, result.getErrorMessage()))
                 returnValue(None)
 
-        log.info('Collected: {}'.format(results))
+        log.debug('Collected: {}'.format(results))
         returnValue(results)
 
     def process(self, device, results, log):
@@ -78,20 +78,19 @@ class ISAMModeler(PythonPlugin):
             - An ObjectMap, for the device device information
             - A list of RelationshipMaps and ObjectMaps, both
         """
-        #log.info('{}: ***processing data***'.format(device.id))
 
         self.result_data = {}
         for success, result in results:
             if success:
+                # TODO: Check integrity
                 self.result_data[result[0]] = json.loads(result[1])
-        log.info('result_data:{}'.format(self.result_data))
 
         maps = []
         maps.extend(self.get_reverse_proxies(log))
         maps.append(self.get_ifaces(log))
         maps.append(self.get_filesystems(log))
 
-        log.info('{}: ***processed***:{}'.format(device.id, maps))
+        log.debug('{}: process maps:{}'.format(device.id, maps))
         return maps
 
     def get_reverse_proxies(self, log):

@@ -89,7 +89,6 @@ device_classes:
           cpu:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMDevice.ISAMDevice
-            cycletime: 60
 
             datapoints:
               user_cpu: GAUGE
@@ -99,7 +98,6 @@ device_classes:
           memory:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMDevice.ISAMDevice
-            cycletime: 60
 
             datapoints:
               used: GAUGE
@@ -111,6 +109,8 @@ device_classes:
           CPU:
             units: percent
             width: 1000
+            miny: 0
+            maxy: 100
 
             graphpoints:
               User CPU percentage:
@@ -134,6 +134,7 @@ device_classes:
             graphpoints:
               Memory usage (MB):
                 dpName: memory_used
+                lineType: AREA
 
           Memory Percentage:
             units: percent
@@ -144,6 +145,7 @@ device_classes:
             graphpoints:
               Memory usage (percentage):
                 dpName: memory_used_perc
+                lineType: AREA
 
       ISAMReverseProxy:
         datasources:
@@ -234,6 +236,29 @@ device_classes:
                 rrdtype: GAUGE
               used_perc:
                 rrdtype: GAUGE
+
+        graphs:
+          FileSystem Used:
+            width: 1000
+            units: bytes
+            base: true
+            miny: 0
+
+            graphpoints:
+              used:
+                dpName: filesystem_used
+                lineType: AREA
+
+          FileSystem Used Percentage:
+            width: 1000
+            units: percent
+            miny: 0
+            maxy: 100
+
+            graphpoints:
+              used:
+                dpName: filesystem_used_perc
+                lineType: AREA
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy
