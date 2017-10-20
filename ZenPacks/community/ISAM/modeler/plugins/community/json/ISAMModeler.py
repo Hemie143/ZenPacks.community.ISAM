@@ -82,8 +82,11 @@ class ISAMModeler(PythonPlugin):
         self.result_data = {}
         for success, result in results:
             if success:
-                # TODO: Check integrity
-                self.result_data[result[0]] = json.loads(result[1])
+                if result[1]:
+                    content = json.loads(result[1])
+                else:
+                    content = {}
+                self.result_data[result[0]] = content
 
         maps = []
         maps.extend(self.get_reverse_proxies(log))
@@ -94,7 +97,7 @@ class ISAMModeler(PythonPlugin):
         return maps
 
     def get_reverse_proxies(self, log):
-        data = self.result_data.get('health').get('items')
+        data = self.result_data.get('health').get('items', '')
         rproxy_maps = []
         rm_junctions = []
         rm = []
