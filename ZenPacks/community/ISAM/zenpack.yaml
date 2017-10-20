@@ -53,6 +53,7 @@ classes:
   ISAMFileSystem:
     base: [zenpacklib.Component]
     label: File System
+    monitoring_templates: [ISAMFileSystem]
     properties:
       size:
         label: Size
@@ -152,7 +153,8 @@ device_classes:
             cycletime: 60
 
             datapoints:
-              status: GAUGE
+              status:
+                rrdtype: GAUGE
 
           throughput:
             type: Python
@@ -160,7 +162,19 @@ device_classes:
             cycletime: 600
 
             datapoints:
-              requests: GAUGE
+              requests:
+                rrdtype: GAUGE
+                createCmd: 'RRA:AVERAGE:0.5:1:600
+                  RRA:AVERAGE:0.5:6:600
+                  RRA:AVERAGE:0.5:24:600
+                  RRA:AVERAGE:0.5:288:600
+                  RRA:MAX:0.5:6:600
+                  RRA:MAX:0.5:24:600
+                  RRA:MAX:0.5:288:600
+                  RRA:LAST:0.5:1:600
+                  RRA:LAST:0.5:6:600
+                  RRA:LAST:0.5:24:600
+                  RRA:LAST:0.5:288:600'
 
         graphs:
           Status:
@@ -172,7 +186,6 @@ device_classes:
               status:
                 dpName: status_status
 
-
           Throughput:
             units: requests
             width: 1000
@@ -181,6 +194,46 @@ device_classes:
             graphpoints:
               requests:
                 dpName: throughput_requests
+                cFunc: LAST
+
+      ISAMInterface:
+        datasources:
+          interface:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMInterface.ISAMInterface
+
+            datapoints:
+              inbound:
+                rrdtype: GAUGE
+              outbound:
+                rrdtype: GAUGE
+
+        graphs:
+          Bandwidth:
+            height: 100
+            width: 1000
+            units: bits/s
+            miny: 0
+
+            graphpoints:
+              inbound:
+                dpName: interface_inbound
+              outbound:
+                dpName: interface_outbound
+
+      ISAMFileSystem:
+        datasources:
+          filesystem:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMFileSystem.ISAMFileSystem
+
+            datapoints:
+              size:
+                rrdtype: GAUGE
+              used:
+                rrdtype: GAUGE
+              used_perc:
+                rrdtype: GAUGE
 
 class_relationships:
   - ISAMDevice 1:MC ISAMReverseProxy

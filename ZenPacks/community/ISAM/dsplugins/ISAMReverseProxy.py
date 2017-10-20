@@ -130,8 +130,10 @@ class RPStatus(ISAMReverseProxy):
         for rproxy in items:
             component = rproxy['name']
             value = rproxy['health']
+            # log.info('RPStatus onSuccess - {} status: {}'.format(component, value))
             data['values'][component]['status'] = (value, 'N')
             # TODO: event
+        log.info('RPStatus data: {}'.format(data))
         return data
 
 
@@ -149,7 +151,7 @@ class RPThroughput(ISAMReverseProxy):
         now_time = int(time.time())     # Time in GMT, as on device
         # start_time = now_time - 5 * cycletime
         start_time = int(now_time - now_time % isam_cycle) - isam_cycle
-        log.info('time_10: {}'.format(start_time))
+        # log.info('time_10: {}'.format(start_time))
         # midnight = int(now_time - now_time % 86400)
         url = 'https://{}/analysis/reverse_proxy_traffic/throughput_widget?date={}&duration={}'.format(ip_address,
                                                                                                        start_time,
@@ -166,9 +168,6 @@ class RPThroughput(ISAMReverseProxy):
         now_time = time.time()  # Time in GMT, as on device
         current_window_start = now_time - now_time % isam_cycle
         prev_window_start = current_window_start - isam_cycle
-        log.info('now time       rrd: {}'.format(now_time))
-        log.info('current window rrd: {}'.format(current_window_start))
-        log.info('prev    window rrd: {}'.format(prev_window_start))
 
         for rproxy in result:
             component = rproxy['instance']
@@ -177,33 +176,21 @@ class RPThroughput(ISAMReverseProxy):
             # the current window sees its value raising during the current interval of 10 minutes
             # this means that the current window has its value reset every 10 minutes
             records = rproxy['records']
-            log.info('records: {}'.format(records))
+            # log.info('records: {}'.format(records))
             if records == 0:
-                # data['values'][component]['requests'] = (0, rproxy['start_time'])
                 data['values'][component]['requests'] = (0, 'N')
+            elif len(records)==1:
+                log.error('onSucces: records not a list: {}'.format(recods))
             else:
                 # TODO: keep only most recent poll ?
-                for poll in rproxy['records']:
-                    # data['values'][component]['requests'] = (poll['e'], poll['t'])
-                    poll_time =float(poll['t'])
+                for poll in records:
+                    poll_time = float(poll['t'])
                     if poll_time == prev_window_start:
-                        log.info('prev window start rrd')
-                        # log.info('timestamp rrd for {}: {}'.format(component, poll_time))
-                        # TODO : change timestamp : N, now_time & prev_window_start
-                        data['values'][component]['requests'] = (poll['e'], 'N')
+                        # log.info('Writing data for {} - t={} - val={}'.format(component, current_window_start, poll['e']))
+                        data['values'][component]['requests'] = (poll['e'], current_window_start)
                         break
 
-        '''    *   start_time - Integer - Start time as given in query
-    *   instance - String - Reverse Proxy instance name
-    *   offset - Integer - ???
-    *   total_hits - Integer - Number of hits since start time
-    *   tzname - String - Timezone: "GMT"
-    *   bucket_size - Integer - interval duration ???
-    *   records - Dictionary or list of dictionary
-        * t - Integer - timestamp
-        * e - Integer - number of hits during interval ???
-        '''
-
+        log.info('RPThroughput data: {}'.format(data))
         return data
 
 
