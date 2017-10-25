@@ -96,6 +96,8 @@ class ISAMDevice(PythonDataSourcePlugin):
                 # TODO Following isn't that nice...
                 if datasource.datasource == 'memory' and point.dpName == 'memory_used_perc':
                     value = float(ds_data['memory']['used'])/float(ds_data['memory']['total'])*100
+                elif datasource.datasource == 'cpu' and point.dpName == 'cpu_total_cpu':
+                    value = float(ds_data['cpu']['user_cpu']) + float(ds_data['cpu']['system_cpu'])
                 else:
                     value = float(ds_data[datasource.datasource][point.id])
                     if datasource.datasource in ['memory']:

@@ -117,7 +117,7 @@ class RPThroughput(ISAMReverseProxy):
         now_time = time.time()  # Time in GMT, as on device
         current_window_start = now_time - now_time % isam_cycle
         prev_window_start = current_window_start - isam_cycle
-
+        cycletime = config.datasources[0].cycletime
         for rproxy in result:
             component = rproxy['instance']
             # records could be a dictionary, not a list ???
@@ -128,13 +128,13 @@ class RPThroughput(ISAMReverseProxy):
             if records == 0:
                 data['values'][component]['requests'] = (0, 'N')
             elif len(records) == 1:
-                log.error('onSucces: records not a list: {}'.format(recods))
+                log.error('onSuccess: records not a list: {}'.format(recods))
             else:
-                # TODO: keep only most recent poll ?
                 for poll in records:
                     poll_time = float(poll['t'])
                     if poll_time == prev_window_start:
-                        data['values'][component]['requests'] = (poll['e'], current_window_start)
+                        # Divide value by cycletime and multiply by 60 to get number of requests per minute
+                        data['values'][component]['requests'] = (float(poll['e'])/cycletime*60, current_window_start)
                         break
 
         log.debug('RPThroughput data: {}'.format(data))

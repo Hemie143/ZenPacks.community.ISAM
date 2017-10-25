@@ -65,17 +65,6 @@ device_classes:
       zPythonClass: ZenPacks.community.ISAM.ISAMDevice
       zSnmpMonitorIgnore: true
       zCollectorPlugins:
-        - zenoss.snmp.NewDeviceMap
-        - zenoss.snmp.DeviceMap
-        - zenoss.snmp.SnmpV3EngineIdMap
-        - zenoss.snmp.InterfaceMap
-        - zenoss.snmp.RouteMap
-        - zenoss.snmp.HRFileSystemMap
-        - zenoss.snmp.HRSWRunMap
-        - zenoss.snmp.HRSWInstalledMap
-        - zenoss.snmp.HSRPMap
-        - zenoss.snmp.CpuMap
-        - zenoss.snmp.IpServiceMap
         - community.json.ISAM
       zDeviceTemplates:
         - Device
@@ -94,6 +83,7 @@ device_classes:
               user_cpu: GAUGE
               system_cpu: GAUGE
               idle_cpu: GAUGE
+              total_cpu: GAUGE
 
           memory:
             type: Python
@@ -124,6 +114,17 @@ device_classes:
                 dpName: cpu_idle_cpu
                 lineType: AREA
                 stacked: true
+
+          Total CPU:
+            units: percent
+            width: 1000
+            miny: 0
+            maxy: 100
+
+            graphpoints:
+              Total CPU percentage:
+                dpName: cpu_total_cpu
+                lineType: AREA
 
           Memory:
             units: bytes
@@ -189,7 +190,7 @@ device_classes:
                 dpName: status_status
 
           Throughput:
-            units: requests
+            units: requests/min
             width: 1000
             miny: 0
 

@@ -65,7 +65,7 @@ class ISAMModeler(PythonPlugin):
         for success, result in results:
             if not success:
                 log.error('{}: {}'.format(device.id, result.getErrorMessage()))
-                returnValue(None)
+                #returnValue(None)
 
         log.debug('Collected: {}'.format(results))
         returnValue(results)
@@ -97,7 +97,11 @@ class ISAMModeler(PythonPlugin):
         return maps
 
     def get_reverse_proxies(self, log):
-        data = self.result_data.get('health').get('items', '')
+        data = self.result_data.get('health','')
+        if data:
+            data = data.get('items', '')
+        else:
+            return None
         rproxy_maps = []
         rm_junctions = []
         rm = []
@@ -130,7 +134,11 @@ class ISAMModeler(PythonPlugin):
         return rm
 
     def get_ifaces(self, log):
-        data = self.result_data.get('ifaces').get('interfaces')
+        data = self.result_data.get('ifaces', '')
+        if data:
+            data = data.get('interfaces', '')
+        else:
+            return None
         if_maps = []
         for iface in data:
             om_if = ObjectMap()
@@ -151,8 +159,9 @@ class ISAMModeler(PythonPlugin):
         return rm
 
     def get_filesystems(self, log):
-        data = self.result_data.get('storage')
-
+        data = self.result_data.get('storage', '')
+        if not data:
+            return None
         fs_maps = []
         default_fs = ['root', 'boot']
         for fs in default_fs:
