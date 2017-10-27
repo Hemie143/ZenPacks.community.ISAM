@@ -67,3 +67,4 @@ setup(
 
 # TODO: event in case of device unreachable
 # TODO: event within onError methods
+# TODO: Event classes and transforms

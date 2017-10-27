@@ -59,6 +59,15 @@ classes:
         label: Size
         renderer: Zenoss.render.bytesString
 
+event_classes:
+  /Status/ISAMReverseProxy:
+    remove: true
+    transform: "if int(float(evt.current)) == 0:\n    msg = 'Reverse Proxy {}: OK'.format(evt.component)\n\
+      if int(float(evt.current)) == 1:\n    msg = 'Reverse Proxy {}: failure with\
+      \ a Junction'.format(evt.component)\nelif int(float(evt.current)) == 2:\n  \
+      \  msg = 'Reverse Proxy {}: Reverse Proxy failure'.format(evt.component)\n\n\
+      evt.message = msg\nevt.summary = msg"
+
 device_classes:
   /Security/ISAM:
     zProperties:
@@ -178,6 +187,18 @@ device_classes:
                   RRA:LAST:0.5:6:600
                   RRA:LAST:0.5:24:600
                   RRA:LAST:0.5:288:600'
+
+        thresholds:
+          Reverse Proxy Status Critical:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMReverseProxy
+            severity: 5
+            maxval: 1.5
+          Reverse Proxy Status Error:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMReverseProxy
+            severity: 4
+            maxval: 0.5
 
         graphs:
           Status:
