@@ -8,6 +8,13 @@ zProperties:
     category: ISAM
     type: password
 
+class_relationships:
+  - ISAMDevice 1:MC ISAMReverseProxy
+  - ISAMDevice 1:MC ISAMInterface
+  - ISAMDevice 1:MC ISAMFileSystem
+  - ISAMReverseProxy 1:MC ISAMJunction
+  - ISAMJunction 1:MC ISAMJunctionServer
+
 classes:
   ISAMDevice:
     base: [zenpacklib.Device]
@@ -34,10 +41,10 @@ classes:
   ISAMJunction:
     base: [zenpacklib.Component]
     label: ISAM Junction
-    properties:
-      rp_name:
-        type: string
-        label: Reverse Proxy Name
+
+  ISAMJunctionServer:
+    base: [zenpacklib.Component]
+    label: ISAM Junctioned Server
 
   ISAMInterface:
     base: [zenpacklib.Component]
@@ -67,6 +74,10 @@ event_classes:
       \ a Junction'.format(evt.component)\nelif int(float(evt.current)) == 2:\n  \
       \  msg = 'Reverse Proxy {}: Reverse Proxy failure'.format(evt.component)\n\n\
       evt.message = msg\nevt.summary = msg"
+  /Status/ISAMJunction:
+    remove: true
+  /Status/ISAMJunctionServer:
+    remove: true
 
 device_classes:
   /Security/ISAM:
@@ -201,7 +212,7 @@ device_classes:
             maxval: 0.5
 
         graphs:
-          Status:
+          Reverse Proxy Status:
             width: 1000
             miny: 0
             maxy: 2
@@ -219,6 +230,62 @@ device_classes:
               requests:
                 dpName: throughput_requests
                 cFunc: LAST
+
+      ISAMJunction:
+        datasources:
+          status:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMJunction.JStatus
+            cycletime: 60
+
+            datapoints:
+              status:
+                rrdtype: GAUGE
+
+        thresholds:
+          Junction Status:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMJunction
+            severity: 5
+            maxval: 1.5
+
+        graphs:
+          Junction Status:
+            width: 1000
+            miny: 0
+            maxy: 2
+
+            graphpoints:
+              status:
+                dpName: status_status
+
+      ISAMJunctionServer:
+        datasources:
+          status:
+            type: Python
+            plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMJunctionServer.JSStatus
+            cycletime: 60
+
+            datapoints:
+              status:
+                rrdtype: GAUGE
+
+        thresholds:
+          Junction Server Status:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMJunctionServer
+            severity: 5
+            maxval: 1.5
+
+        graphs:
+          Junction Server Status:
+            width: 1000
+            miny: 0
+            maxy: 2
+
+            graphpoints:
+              status:
+                dpName: status_status
 
       ISAMInterface:
         datasources:
@@ -282,8 +349,3 @@ device_classes:
                 dpName: filesystem_used_perc
                 lineType: AREA
 
-class_relationships:
-  - ISAMDevice 1:MC ISAMReverseProxy
-  - ISAMDevice 1:MC ISAMInterface
-  - ISAMDevice 1:MC ISAMFileSystem
-  - ISAMReverseProxy 1:MC ISAMJunction

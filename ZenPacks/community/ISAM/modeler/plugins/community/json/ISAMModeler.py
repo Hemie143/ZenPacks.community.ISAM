@@ -103,6 +103,7 @@ class ISAMModeler(PythonPlugin):
         else:
             return []
         rproxy_maps = []
+        rm_jservers = []
         rm_junctions = []
         rm = []
         for r in data:
@@ -112,7 +113,7 @@ class ISAMModeler(PythonPlugin):
             om_rproxy.title = r['name']
             rproxy_maps.append(om_rproxy)
             # Junction RelationshipMaps
-            compname = 'isamreverseProxys/{}'.format(om_rproxy.id)
+            compname_rp = 'isamreverseProxys/{}'.format(om_rproxy.id)
             junction_maps = []
             rproxy_junctions = r['children']
             for j in rproxy_junctions:
@@ -120,9 +121,23 @@ class ISAMModeler(PythonPlugin):
                 om_junction.id = self.prepId(j['name'])
                 om_junction.title = j['name']
                 junction_maps.append(om_junction)
+                # Junctioned Server RelationshipMaps
+                compname_j = '{}/isamjunctions/{}'.format(compname_rp, om_junction.id)
+                jserver_maps = []
+                junctioned_servers = j.get('children', [])
+                for s in junctioned_servers:
+                    om_jserver = ObjectMap()
+                    om_jserver.id = self.prepId(s['name'])
+                    om_jserver.title = str(s['label'])
+                    jserver_maps.append(om_jserver)
+                rm_jservers.append(RelationshipMap(relname='isamjunctionServers',
+                                                   modname='ZenPacks.community.ISAM.ISAMJunctionServer',
+                                                   compname=compname_j,
+                                                   objmaps=jserver_maps))
+
             rm_junctions.append(RelationshipMap(relname='isamjunctions',
                                                 modname='ZenPacks.community.ISAM.ISAMJunction',
-                                                compname=compname,
+                                                compname=compname_rp,
                                                 objmaps=junction_maps
                                                 ))
 
@@ -130,6 +145,7 @@ class ISAMModeler(PythonPlugin):
                                     modname='ZenPacks.community.ISAM.ISAMReverseProxy',
                                     compname='',
                                     objmaps=rproxy_maps))
+        rm.extend(rm_jservers)
         rm.extend(rm_junctions)
         return rm
 
