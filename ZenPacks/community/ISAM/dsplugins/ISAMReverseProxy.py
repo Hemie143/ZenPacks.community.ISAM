@@ -11,6 +11,7 @@ from twisted.web.client import getPage
 
 # Zenoss imports
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonDataSourcePlugin
+from Products.ZenUtils.Utils import prepId
 
 # Setup logging
 log = logging.getLogger('zen.PythonISAMReverseProxy')
@@ -86,8 +87,8 @@ class RPStatus(ISAMReverseProxy):
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:
-            component = rproxy['name']
-            value = rproxy['health']
+            component = prepId(rproxy['name'])
+            value = float(rproxy['health'])
             data['values'][component]['status'] = (value, 'N')
             # TODO: event
         log.debug('RPStatus data: {}'.format(data))
@@ -119,7 +120,7 @@ class RPThroughput(ISAMReverseProxy):
         prev_window_start = current_window_start - isam_cycle
         cycletime = config.datasources[0].cycletime
         for rproxy in result:
-            component = rproxy['instance']
+            component = prepId(rproxy['instance'])
             # records could be a dictionary, not a list ???
             # records holds values collected for each window of 10 minutes
             # the current window sees its value raising during the current interval of 10 minutes

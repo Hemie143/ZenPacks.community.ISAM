@@ -14,10 +14,10 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonD
 from Products.ZenUtils.Utils import prepId
 
 # Setup logging
-log = logging.getLogger('zen.PythonISAMJunction')
+log = logging.getLogger('zen.PythonISAMJunctionServer')
 isam_cycle = 600
 
-class ISAMJunction(PythonDataSourcePlugin):
+class ISAMJunctionServer(PythonDataSourcePlugin):
 
     proxy_attributes = (
         'zISAMUsername',
@@ -43,13 +43,13 @@ class ISAMJunction(PythonDataSourcePlugin):
 
     @classmethod
     def params(cls, datasource, context):
-        log.debug('Starting ISAMJunction params')
+        log.debug('Starting ISAMJunctionServer params')
         params = {}
         log.debug(' params is %s \n' % (params))
         return params
 
     def collect(self, config):
-        log.debug('Starting ISAMJunction collect')
+        log.debug('Starting ISAMJunctionServer collect')
 
         ds0 = config.datasources[0]
         url = self.ws_url_get(config)
@@ -70,7 +70,7 @@ class ISAMJunction(PythonDataSourcePlugin):
         return {}
 
 
-class JStatus(ISAMJunction):
+class JSStatus(ISAMJunctionServer):
 
     def ws_url_get(self, config):
         ip_address = config.manageIp
@@ -86,13 +86,18 @@ class JStatus(ISAMJunction):
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:
+            r_proxy_id = rproxy['name']
             for junction in rproxy.get('children', []):
-                # TODO: prepId the name ?
-                component = prepId('{}_{}'.format(rproxy['name'], junction['name']))
-                # om_junction.id = self.prepId('{}_{}'.format(om_rproxy.id, j['name']))
-                # component = junction['name']
-                value = float(junction['health'])
-                data['values'][component]['status'] = (value, 'N')
-                # TODO: event
-        log.debug('JStatus data: {}'.format(data))
+                junction_id = junction['name']
+                for jserver in junction.get('children', []):
+                    # TODO: prepId the name ?
+                    # component = jserver['name']
+                    if junction_id.endswith('/'):
+                        component = prepId('{}_{}{}'.format(r_proxy_id, junction_id, jserver['name']))
+                    else:
+                        component = prepId('{}_{}_{}'.format(r_proxy_id, junction_id, jserver['name']))
+                    value = float(jserver['health'])
+                    data['values'][component]['status'] = (value, 'N')
+                    # TODO: event
+        log.debug('JSStatus data: {}'.format(data))
         return data

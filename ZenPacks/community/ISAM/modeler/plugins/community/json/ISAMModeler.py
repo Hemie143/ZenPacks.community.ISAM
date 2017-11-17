@@ -110,7 +110,11 @@ class ISAMModeler(PythonPlugin):
             # Reverse Proxy ObjectMap
             om_rproxy = ObjectMap()
             om_rproxy.id = self.prepId(r['name'])
-            om_rproxy.title = r['name']
+            log.info('RProxy ID: {}'.format(om_rproxy.id))
+            om_rproxy.title = r['label']
+            log.info('RProxy ID: {}'.format(om_rproxy.id))
+            log.info('RProxy Title: {}'.format(om_rproxy.title))
+            log.info('RProxy Label: {}'.format(r['label']))
             rproxy_maps.append(om_rproxy)
             # Junction RelationshipMaps
             compname_rp = 'isamreverseProxys/{}'.format(om_rproxy.id)
@@ -118,8 +122,11 @@ class ISAMModeler(PythonPlugin):
             rproxy_junctions = r['children']
             for j in rproxy_junctions:
                 om_junction = ObjectMap()
-                om_junction.id = self.prepId(j['name'])
-                om_junction.title = j['name']
+                om_junction.id = self.prepId('{}_{}'.format(om_rproxy.id, j['name']))
+                om_junction.title = '{}{}'.format(om_rproxy.title, str(j['label']))
+                log.info('Junction ID: {}'.format(om_junction.id))
+                log.info('Junction Title: {}'.format(om_junction.title))
+                log.info('Junction Label: {}'.format(j['label']))
                 junction_maps.append(om_junction)
                 # Junctioned Server RelationshipMaps
                 compname_j = '{}/isamjunctions/{}'.format(compname_rp, om_junction.id)
@@ -127,8 +134,15 @@ class ISAMModeler(PythonPlugin):
                 junctioned_servers = j.get('children', [])
                 for s in junctioned_servers:
                     om_jserver = ObjectMap()
-                    om_jserver.id = self.prepId(s['name'])
-                    om_jserver.title = str(s['label'])
+                    om_jserver.id = self.prepId('{}_{}'.format(om_junction.id, s['name']))
+                    om_junction.id = self.prepId('{}_{}'.format(om_rproxy.id, j['name']))
+                    if om_junction.title.endswith('/'):
+                        om_jserver.title = '{}{}'.format(om_junction.title, str(s['label']))
+                    else:
+                        om_jserver.title = '{}/{}'.format(om_junction.title, str(s['label']))
+                    log.info('JunctionServer ID: {}'.format(om_jserver.id))
+                    log.info('JunctionServer Title: {}'.format(om_jserver.title))
+                    log.info('JunctionServer Label: {}'.format(s['label']))
                     jserver_maps.append(om_jserver)
                 rm_jservers.append(RelationshipMap(relname='isamjunctionServers',
                                                    modname='ZenPacks.community.ISAM.ISAMJunctionServer',
@@ -145,8 +159,8 @@ class ISAMModeler(PythonPlugin):
                                     modname='ZenPacks.community.ISAM.ISAMReverseProxy',
                                     compname='',
                                     objmaps=rproxy_maps))
-        rm.extend(rm_jservers)
         rm.extend(rm_junctions)
+        rm.extend(rm_jservers)
         return rm
 
     def get_ifaces(self, log):

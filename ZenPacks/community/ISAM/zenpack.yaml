@@ -45,6 +45,7 @@ classes:
   ISAMJunctionServer:
     base: [zenpacklib.Component]
     label: ISAM Junctioned Server
+    monitoring_templates: [ISAMJunctionServer]
 
   ISAMInterface:
     base: [zenpacklib.Component]
@@ -243,11 +244,16 @@ device_classes:
                 rrdtype: GAUGE
 
         thresholds:
-          Junction Status:
+          Junction Status Critical:
             dsnames: [status_status]
             eventClass: /Status/ISAMJunction
             severity: 5
             maxval: 1.5
+          Junction Status Error:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMJunction
+            severity: 4
+            maxval: 0.5
 
         graphs:
           Junction Status:
@@ -271,11 +277,16 @@ device_classes:
                 rrdtype: GAUGE
 
         thresholds:
-          Junction Server Status:
+          Junction Server Status Critical:
             dsnames: [status_status]
             eventClass: /Status/ISAMJunctionServer
             severity: 5
             maxval: 1.5
+          Junction Server Status Error:
+            dsnames: [status_status]
+            eventClass: /Status/ISAMJunctionServer
+            severity: 4
+            maxval: 0.5
 
         graphs:
           Junction Server Status:
