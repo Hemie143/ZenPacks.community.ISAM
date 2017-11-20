@@ -77,8 +77,17 @@ event_classes:
       evt.message = msg\nevt.summary = msg"
   /Status/ISAMJunction:
     remove: true
+    transform: "if int(float(evt.current)) == 0:\n    msg = 'Junction {}: OK'.format(evt.component)\n\
+      if int(float(evt.current)) == 1:\n    msg = 'Junction {}: failure '.format(evt.component)\n\
+      elif int(float(evt.current)) == 2:\n    msg = 'Junction {}: major failure'.format(evt.component)\n\
+      \nevt.message = msg\nevt.summary = msg"
   /Status/ISAMJunctionServer:
     remove: true
+    transform: "if int(float(evt.current)) == 0:\n    msg = 'Junctioned Server {}:\
+      \ OK'.format(evt.component)\nif int(float(evt.current)) == 1:\n    msg = 'Junctioned\
+      \ Server {}: failure '.format(evt.component)\nelif int(float(evt.current)) ==\
+      \ 2:\n    msg = 'Junctioned Server {}: major failure'.format(evt.component)\n\
+      \nevt.message = msg\nevt.summary = msg"
 
 device_classes:
   /Security/ISAM:
@@ -115,7 +124,19 @@ device_classes:
               free: GAUGE
               total: GAUGE
               used_perc: GAUGE
-
+        thresholds:
+          Memory Usage:
+            dsnames: [memory_used_perc]
+            eventClass: /Perf/Memory
+            severity: 4
+            maxval: '85'
+            timePeriod: 15 minutes
+          CPU Usage:
+            dsnames: [cpu_total_cpu]
+            eventClass: /Perf/CPU
+            severity: 4
+            maxval: '90'
+            timePeriod: 15 minutes
         graphs:
           CPU:
             units: percent
@@ -336,6 +357,22 @@ device_classes:
                 rrdtype: GAUGE
               used_perc:
                 rrdtype: GAUGE
+
+        thresholds:
+          FileSystem Usage Warning:
+            dsnames: [filesystem_used_perc]
+            eventClass: /Perf/Filesystem
+            maxval: '60'
+          FileSystem Usage Critical:
+            dsnames: [filesystem_used_perc]
+            eventClass: /Perf/Filesystem
+            severity: 5
+            maxval: '95'
+          FileSystem Usage Error:
+            dsnames: [filesystem_used_perc]
+            eventClass: /Perf/Filesystem
+            severity: 4
+            maxval: '80'
 
         graphs:
           FileSystem Used:
