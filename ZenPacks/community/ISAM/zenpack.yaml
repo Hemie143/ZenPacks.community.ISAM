@@ -68,20 +68,20 @@ classes:
         renderer: Zenoss.render.bytesString
 
 event_classes:
-  /Status/ISAMReverseProxy:
+  /Status/ISAM/ISAMReverseProxy:
     remove: true
     transform: "if int(float(evt.current)) == 0:\n    msg = 'Reverse Proxy {}: OK'.format(evt.component)\n\
       if int(float(evt.current)) == 1:\n    msg = 'Reverse Proxy {}: failure with\
       \ a Junction'.format(evt.component)\nelif int(float(evt.current)) == 2:\n  \
       \  msg = 'Reverse Proxy {}: Reverse Proxy failure'.format(evt.component)\n\n\
       evt.message = msg\nevt.summary = msg"
-  /Status/ISAMJunction:
+  /Status/ISAM/ISAMJunction:
     remove: true
     transform: "if int(float(evt.current)) == 0:\n    msg = 'Junction {}: OK'.format(evt.component)\n\
       if int(float(evt.current)) == 1:\n    msg = 'Junction {}: failure '.format(evt.component)\n\
       elif int(float(evt.current)) == 2:\n    msg = 'Junction {}: major failure'.format(evt.component)\n\
       \nevt.message = msg\nevt.summary = msg"
-  /Status/ISAMJunctionServer:
+  /Status/ISAM/ISAMJunctionServer:
     remove: true
     transform: "if int(float(evt.current)) == 0:\n    msg = 'Junctioned Server {}:\
       \ OK'.format(evt.component)\nif int(float(evt.current)) == 1:\n    msg = 'Junctioned\

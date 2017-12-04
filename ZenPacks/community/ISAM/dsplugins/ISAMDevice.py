@@ -53,6 +53,7 @@ class ISAMDevice(PythonDataSourcePlugin):
         log.debug(' params is %s \n' % (params))
         return params
 
+    # TODO : with inlinebacks and return yields
     def collect(self, config):
         log.debug('Starting ISAM Device collect')
 
@@ -61,6 +62,7 @@ class ISAMDevice(PythonDataSourcePlugin):
             log.error("%s: IP Address cannot be empty", device.id)
             returnValue(None)
 
+        # TODO: check whether loop on datasources is required - doesn't make sense
         deferreds = []
         sem = DeferredSemaphore(1)
         for datasource in config.datasources:
