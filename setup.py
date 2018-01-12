@@ -3,7 +3,7 @@
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
 NAME = "ZenPacks.community.ISAM"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 AUTHOR = "Laurent Hemeryck"
 LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']
@@ -68,3 +68,4 @@ setup(
 # TODO: event in case of device unreachable
 # TODO: event within onError methods
 # TODO: Event classes and transforms
+# TODO: Map SNMP Trap events

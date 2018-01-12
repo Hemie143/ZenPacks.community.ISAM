@@ -4,6 +4,7 @@ import json
 import logging
 import base64
 import time
+from random import randint
 
 # Twisted Imports
 from twisted.internet.defer import returnValue
@@ -82,17 +83,30 @@ class JStatus(ISAMJunction):
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
+        map_status = {0: [0, 'OK'], 1: [3, 'unhealthy'], 2: [5, 'in failure']}
         result = json.loads(result)
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:
             for junction in rproxy.get('children', []):
-                # TODO: prepId the name ?
                 component = prepId('{}_{}'.format(rproxy['name'], junction['name']))
-                # om_junction.id = self.prepId('{}_{}'.format(om_rproxy.id, j['name']))
-                # component = junction['name']
-                value = float(junction['health'])
-                data['values'][component]['status'] = (value, 'N')
-                # TODO: event
+                value = int(junction['health'])
+                if junction['name'] == 'intranet/tb':
+                    value = 1
+                # value = randint(0, 2)
+                data['values'][component]['status'] = (float(value), 'N')
+                data['events'].append({
+                    'device': config.id,
+                    'component': component,
+                    'severity': map_status[value][0],
+                    'eventKey': 'JStatus',
+                    'eventClassKey': 'ISAMJStatusTest',
+                    'summary': 'Junction {} - Status is {}'.format(junction['name'], map_status[value][1]),
+                    'eventClass': '/Status/ISAMJunction',
+                    'isamRP': prepId(rproxy['name']),
+                    'isamJ': prepId(junction['name']),
+                    'isamJS': None,
+                })
+
         log.debug('JStatus data: {}'.format(data))
         return data

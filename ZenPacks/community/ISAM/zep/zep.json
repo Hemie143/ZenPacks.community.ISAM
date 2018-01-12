@@ -1,0 +1,19 @@
+{
+    "EventDetailItem" : [
+        {
+            "name" : "isamRP",
+            "key" : "isamRP",
+            "type" : 1
+        },
+        {
+            "name" : "isamJ",
+            "key" : "isamJ",
+            "type" : 1
+        },
+        {
+            "name" : "isamJS",
+            "key" : "isamJS",
+            "type" : 1
+        }
+    ]
+}

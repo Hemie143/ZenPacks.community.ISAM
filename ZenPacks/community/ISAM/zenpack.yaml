@@ -88,6 +88,8 @@ event_classes:
       \ Server {}: failure '.format(evt.component)\nelif int(float(evt.current)) ==\
       \ 2:\n    msg = 'Junctioned Server {}: major failure'.format(evt.component)\n\
       \nevt.message = msg\nevt.summary = msg"
+  /Status/ISAM/LogData:
+    remove: false
 
 device_classes:
   /Security/ISAM:
@@ -130,12 +132,14 @@ device_classes:
             eventClass: /Perf/Memory
             severity: 4
             maxval: '85'
+            type: DurationThreshold
             timePeriod: 15 minutes
           CPU Usage:
             dsnames: [cpu_total_cpu]
             eventClass: /Perf/CPU
             severity: 4
             maxval: '90'
+            type: DurationThreshold
             timePeriod: 15 minutes
         graphs:
           CPU:
@@ -222,16 +226,6 @@ device_classes:
                   RRA:LAST:0.5:288:600'
 
         thresholds:
-          Reverse Proxy Status Critical:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMReverseProxy
-            severity: 5
-            maxval: 1.5
-          Reverse Proxy Status Error:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMReverseProxy
-            severity: 4
-            maxval: 0.5
 
         graphs:
           Reverse Proxy Status:
@@ -265,16 +259,6 @@ device_classes:
                 rrdtype: GAUGE
 
         thresholds:
-          Junction Status Critical:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMJunction
-            severity: 5
-            maxval: 1.5
-          Junction Status Error:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMJunction
-            severity: 4
-            maxval: 0.5
 
         graphs:
           Junction Status:
@@ -298,16 +282,6 @@ device_classes:
                 rrdtype: GAUGE
 
         thresholds:
-          Junction Server Status Critical:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMJunctionServer
-            severity: 5
-            maxval: 1.5
-          Junction Server Status Error:
-            dsnames: [status_status]
-            eventClass: /Status/ISAMJunctionServer
-            severity: 4
-            maxval: 0.5
 
         graphs:
           Junction Server Status:

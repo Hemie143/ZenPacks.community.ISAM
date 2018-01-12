@@ -4,6 +4,7 @@ import json
 import logging
 import base64
 import time
+from random import randint
 
 # Twisted Imports
 from twisted.internet.defer import returnValue
@@ -82,6 +83,7 @@ class JSStatus(ISAMJunctionServer):
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
+        map_status = {0: [0, 'OK'], 1: [3, 'unhealthy'], 2: [5, 'in failure']}
         result = json.loads(result)
         items = result.get('items')
         data = self.new_data()
@@ -90,14 +92,31 @@ class JSStatus(ISAMJunctionServer):
             for junction in rproxy.get('children', []):
                 junction_id = junction['name']
                 for jserver in junction.get('children', []):
-                    # TODO: prepId the name ?
-                    # component = jserver['name']
                     if junction_id.endswith('/'):
+                        junction_label = '{}{}'.format(junction_id, jserver['name'])
                         component = prepId('{}_{}{}'.format(r_proxy_id, junction_id, jserver['name']))
+                        junction_field = junction_id[:-1]
                     else:
+                        junction_label = '{}/{}'.format(junction_id, jserver['name'])
                         component = prepId('{}_{}_{}'.format(r_proxy_id, junction_id, jserver['name']))
+                        junction_field = junction_id
                     value = float(jserver['health'])
+                    if jserver['name'] == 'intranet/tbdvb-trstbdreai-dctl.dev.credoc.be:80':
+                        value = 1
+                    # value = randint(0, 2)
                     data['values'][component]['status'] = (value, 'N')
-                    # TODO: event
+                    data['events'].append({
+                        'device': config.id,
+                        'component': component,
+                        'severity': map_status[value][0],
+                        'eventKey': 'JSStatus',
+                        'eventClassKey': 'ISAMJSStatusTest',
+                        'summary': 'Junction Server {} - Status is {}'.format(junction_label, map_status[value][1]),
+                        'eventClass': '/Status/ISAMJunctionServer',
+                        'isamRP': prepId(r_proxy_id),
+                        'isamJ': prepId(junction_field),
+                        'isamJS': prepId(jserver['name']),
+                    })
+
         log.debug('JSStatus data: {}'.format(data))
         return data

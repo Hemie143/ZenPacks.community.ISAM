@@ -4,6 +4,7 @@ import json
 import logging
 import base64
 import time
+from random import randint
 
 # Twisted Imports
 from twisted.internet.defer import returnValue
@@ -82,15 +83,30 @@ class RPStatus(ISAMReverseProxy):
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
-
+        map_status = {0: [0, 'OK'], 1: [3, 'unhealthy'], 2: [5, 'in failure']}
         result = json.loads(result)
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:
             component = prepId(rproxy['name'])
-            value = float(rproxy['health'])
-            data['values'][component]['status'] = (value, 'N')
-            # TODO: event
+            value = int(rproxy['health'])
+            if rproxy['name'] == 'intranet':
+                value = 1
+            # value = randint(0, 2)
+            data['values'][component]['status'] = (float(value), 'N')
+            data['events'].append({
+                'device': config.id,
+                'component': component,
+                'severity': map_status[value][0],
+                'eventKey': 'RPStatus',
+                'eventClassKey': 'RPStatusTest',
+                'summary': 'Reverse Proxy {} - Status is {}'.format(component, map_status[value][1]),
+                'eventClass': '/Status/ISAMReverseProxy',
+                'isamRP': component,
+                'isamJ': None,
+                'isamJS': None,
+            })
+
         log.debug('RPStatus data: {}'.format(data))
         return data
 
