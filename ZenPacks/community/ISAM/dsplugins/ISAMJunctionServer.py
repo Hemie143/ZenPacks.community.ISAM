@@ -101,14 +101,12 @@ class JSStatus(ISAMJunctionServer):
                         component = prepId('{}_{}_{}'.format(r_proxy_id, junction_id, jserver['name']))
                         junction_field = junction_id
                     value = float(jserver['health'])
-                    if jserver['name'] == 'intranet/tbdvb-trstbdreai-dctl.dev.credoc.be:80':
-                        value = 1
-                    # value = randint(0, 2)
                     data['values'][component]['status'] = (value, 'N')
                     data['events'].append({
                         'device': config.id,
                         'component': component,
-                        'severity': map_status[value][0],
+                        'severity': 2,
+                        'measured_severity': map_status[value][0],
                         'eventKey': 'JSStatus',
                         'eventClassKey': 'ISAMJSStatusTest',
                         'summary': 'Junction Server {} - Status is {}'.format(junction_label, map_status[value][1]),

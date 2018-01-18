@@ -8,7 +8,7 @@ AUTHOR = "Laurent Hemeryck"
 LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']
 PACKAGES = ['ZenPacks', 'ZenPacks.community', 'ZenPacks.community.ISAM']
-INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib', 'ZenPacks.zenoss.PythonCollector']
+INSTALL_REQUIRES = ['ZenPacks.zenoss.ZenPackLib', 'ZenPacks.zenoss.PythonCollector', 'ZenPacks.zenoss.DurationThreshold']
 COMPAT_ZENOSS_VERS = ""
 PREV_ZENPACK_NAME = ""
 # STOP_REPLACEMENTS
@@ -67,5 +67,4 @@ setup(
 
 # TODO: event in case of device unreachable
 # TODO: event within onError methods
-# TODO: Event classes and transforms
-# TODO: Map SNMP Trap events
+# TODO: same config key for all status collection classes => single collection

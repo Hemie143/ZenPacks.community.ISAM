@@ -90,14 +90,12 @@ class RPStatus(ISAMReverseProxy):
         for rproxy in items:
             component = prepId(rproxy['name'])
             value = int(rproxy['health'])
-            if rproxy['name'] == 'intranet':
-                value = 1
-            # value = randint(0, 2)
             data['values'][component]['status'] = (float(value), 'N')
             data['events'].append({
                 'device': config.id,
                 'component': component,
-                'severity': map_status[value][0],
+                'severity': 2,
+                'measured_severity': map_status[value][0],
                 'eventKey': 'RPStatus',
                 'eventClassKey': 'RPStatusTest',
                 'summary': 'Reverse Proxy {} - Status is {}'.format(component, map_status[value][1]),

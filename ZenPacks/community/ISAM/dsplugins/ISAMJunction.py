@@ -91,14 +91,12 @@ class JStatus(ISAMJunction):
             for junction in rproxy.get('children', []):
                 component = prepId('{}_{}'.format(rproxy['name'], junction['name']))
                 value = int(junction['health'])
-                if junction['name'] == 'intranet/tb':
-                    value = 1
-                # value = randint(0, 2)
                 data['values'][component]['status'] = (float(value), 'N')
                 data['events'].append({
                     'device': config.id,
                     'component': component,
-                    'severity': map_status[value][0],
+                    'severity': 2,
+                    'measured_severity': map_status[value][0],
                     'eventKey': 'JStatus',
                     'eventClassKey': 'ISAMJStatusTest',
                     'summary': 'Junction {} - Status is {}'.format(junction['name'], map_status[value][1]),

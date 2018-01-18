@@ -68,6 +68,9 @@ classes:
         renderer: Zenoss.render.bytesString
 
 event_classes:
+  /Status/ISAM:
+    remove: false
+
   /Status/ISAM/ISAMReverseProxy:
     remove: true
     transform: "if int(float(evt.current)) == 0:\n    msg = 'Reverse Proxy {}: OK'.format(evt.component)\n\
@@ -90,6 +93,120 @@ event_classes:
       \nevt.message = msg\nevt.summary = msg"
   /Status/ISAM/LogData:
     remove: false
+    mappings:
+      iss.0.2:
+        eventClassKey: iss.0.2
+        sequence: 1001
+        example: snmp trap iss.0.2
+
+  /Status/ISAMReverseProxy:
+    remove: true
+    transform: |+
+      # Count events and adapt severity according to counts ################################
+
+      # Count identical events ###################################################
+      # Initialize existing_count.
+      existing_count = 0
+      # Prefix for fingerprint (dedupid).
+      dedupfields = [evt.device, evt.component, evt.eventClass]
+      if getattr(evt, 'eventKey', False):
+          dedupfields += [evt.eventKey, evt.severity]      # Should always be this one
+      else:
+          dedupfields += [evt.severity, evt.summary]
+
+      zep = getFacade('zep')
+      # Filter for New and Ack'd event with same fingerprint
+      evt_filter = zep.createEventFilter(status=(0,1), fingerprint='|'.join(map(str, dedupfields)))
+      summaries = zep.getEventSummaries(0, 1, filter=evt_filter)
+      if summaries['total']:
+          existing_count = list(summaries['events'])[0]['count']
+
+      # Look for child events ####################################################
+      # Filter for New and Ack'd event with severity higher or equal to warn, same device and same Reverse Proxy
+      evt_filter = zep.createEventFilter(status=(0,1), severity=(3,4,5), element_identifier=(evt.device), details={'isamRP': evt.isamRP})  # Adapt for other classes
+      summaries = zep.getEventSummaries(0, 10, filter=evt_filter)
+      for e in summaries['events']:
+          if e['occurrence'][0]['event_class'].startswith('/Status/ISAMJunction'):
+              # If child event found, set current event severity to Info
+              evt.severity = 2
+              break
+      else:
+          # No child event found
+          if existing_count < 4:      # Must be higher than for Junction
+              # Delay the alert, keep it to Info
+              evt.severity = 2
+          else:
+              # Waited for delay, set it to measured severity
+              evt.severity = evt.measured_severity
+
+  /Status/ISAMJunction:
+    remove: true
+    transform: |+
+      # Count events and adapt severity according to counts ################################
+
+      # Count identical events ###################################################
+      # Initialize existing_count.
+      existing_count = 0
+      # Prefix for fingerprint (dedupid).
+      dedupfields = [evt.device, evt.component, evt.eventClass]
+      if getattr(evt, 'eventKey', False):
+          dedupfields += [evt.eventKey, evt.severity]      # Should always be this one
+      else:
+          dedupfields += [evt.severity, evt.summary]
+
+      zep = getFacade('zep')
+      # Filter for New and Ack'd event with same fingerprint
+      evt_filter = zep.createEventFilter(status=(0,1), fingerprint='|'.join(map(str, dedupfields)))
+      summaries = zep.getEventSummaries(0, 1, filter=evt_filter)
+      if summaries['total']:
+          existing_count = list(summaries['events'])[0]['count']
+
+      # Look for child events ####################################################
+      # Filter for New and Ack'd event with severity higher or equal to warn, same device, same Reverse Proxy and same Junction
+      evt_filter = zep.createEventFilter(status=(0,1), severity=(3,4,5), element_identifier=(evt.device), details={'isamRP': evt.isamRP, 'isamJ': evt.isamJ})  # Adapt for other classes
+      summaries = zep.getEventSummaries(0, 10, filter=evt_filter)
+      for e in summaries['events']:
+          if e['occurrence'][0]['event_class'].startswith('/Status/ISAMJunction'):
+              # If child event found, set current event severity to Info
+              evt.severity = 2
+              break
+      else:
+          # No child event found
+          if existing_count < 3:      # Must be higher than for Junction
+              # Delay the alert, keep it to Info
+              evt.severity = 2
+          else:
+              # Waited for delay, set it to measured severity
+              evt.severity = evt.measured_severity
+
+  /Status/ISAMJunctionServer:
+    remove: true
+    transform: |+
+      # Count events and adapt severity according to counts ################################
+      # Count identical events ###################################################
+      # Initialize existing_count.
+      existing_count = 0
+      # Prefix for fingerprint (dedupid).
+      dedupfields = [evt.device, evt.component, evt.eventClass]
+      if getattr(evt, 'eventKey',False):
+          dedupfields += [evt.eventKey, evt.severity]      # Should always be this one
+      else:
+          dedupfields += [evt.severity, evt.summary]
+
+      zep = getFacade('zep')
+      # Filter for New and Ack'd event with same fingerprint
+      evt_filter = zep.createEventFilter(status=(0,1), fingerprint='|'.join(map(str,dedupfields)))
+      summaries = zep.getEventSummaries(0, 1, filter=evt_filter)
+      if summaries['total']:
+          existing_count = list(summaries['events'])[0]['count']
+
+      # No child event here #####################################################
+      if existing_count < 2:
+          # Delay the alert, keep it to Info
+          evt.severity = 2
+      else:
+          # Waited for delay, set it to measured severity
+          evt.severity = evt.measured_severity
 
 device_classes:
   /Security/ISAM:
@@ -225,8 +342,6 @@ device_classes:
                   RRA:LAST:0.5:24:600
                   RRA:LAST:0.5:288:600'
 
-        thresholds:
-
         graphs:
           Reverse Proxy Status:
             width: 1000
@@ -258,8 +373,6 @@ device_classes:
               status:
                 rrdtype: GAUGE
 
-        thresholds:
-
         graphs:
           Junction Status:
             width: 1000
@@ -280,8 +393,6 @@ device_classes:
             datapoints:
               status:
                 rrdtype: GAUGE
-
-        thresholds:
 
         graphs:
           Junction Server Status:
