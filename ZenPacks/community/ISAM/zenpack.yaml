@@ -347,10 +347,7 @@ device_classes:
             width: 1000
             miny: 0
             maxy: 2
-            comments:
-              - 0: Healthy
-              - 1: Warning
-              - 2: Unhealthy
+            comments: [0=Healthy - 1=Warning - 2=Unhealthy]
 
             graphpoints:
               status:
@@ -382,6 +379,7 @@ device_classes:
             width: 1000
             miny: 0
             maxy: 2
+            comments: [0=Healthy - 1=Warning - 2=Unhealthy]
 
             graphpoints:
               status:
@@ -403,6 +401,7 @@ device_classes:
             width: 1000
             miny: 0
             maxy: 2
+            comments: [0=Healthy - 1=Warning - 2=Unhealthy]
 
             graphpoints:
               status:
