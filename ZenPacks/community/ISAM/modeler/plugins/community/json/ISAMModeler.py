@@ -115,7 +115,7 @@ class ISAMModeler(PythonPlugin):
             # Junction RelationshipMaps
             compname_rp = 'isamreverseProxys/{}'.format(om_rproxy.id)
             junction_maps = []
-            rproxy_junctions = r['children']
+            rproxy_junctions = r.get('children', [])
             for j in rproxy_junctions:
                 om_junction = ObjectMap()
                 om_junction.id = self.prepId('{}_{}'.format(om_rproxy.id, j['name']))
