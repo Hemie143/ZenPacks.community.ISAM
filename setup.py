@@ -3,7 +3,7 @@
 # or saved.  Do not modify them directly here.
 # NB: PACKAGES is deprecated
 NAME = "ZenPacks.community.ISAM"
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 AUTHOR = "Laurent Hemeryck"
 LICENSE = "GPLv2"
 NAMESPACE_PACKAGES = ['ZenPacks', 'ZenPacks.community']

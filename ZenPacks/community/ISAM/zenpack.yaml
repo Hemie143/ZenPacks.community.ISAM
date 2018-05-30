@@ -321,6 +321,17 @@ device_classes:
             datapoints:
               status:
                 rrdtype: GAUGE
+                createCmd: 'RRA:AVERAGE:0.5:1:600
+                  RRA:AVERAGE:0.5:6:600
+                  RRA:AVERAGE:0.5:24:600
+                  RRA:AVERAGE:0.5:288:600
+                  RRA:MAX:0.5:6:600
+                  RRA:MAX:0.5:24:600
+                  RRA:MAX:0.5:288:600
+                  RRA:LAST:0.5:1:600
+                  RRA:LAST:0.5:6:600
+                  RRA:LAST:0.5:24:600
+                  RRA:LAST:0.5:288:600'
 
           throughput:
             type: Python
@@ -352,6 +363,7 @@ device_classes:
             graphpoints:
               status:
                 dpName: status_status
+                cFunc: LAST
 
           Throughput:
             units: requests/min
@@ -373,6 +385,17 @@ device_classes:
             datapoints:
               status:
                 rrdtype: GAUGE
+                createCmd: 'RRA:AVERAGE:0.5:1:600
+                  RRA:AVERAGE:0.5:6:600
+                  RRA:AVERAGE:0.5:24:600
+                  RRA:AVERAGE:0.5:288:600
+                  RRA:MAX:0.5:6:600
+                  RRA:MAX:0.5:24:600
+                  RRA:MAX:0.5:288:600
+                  RRA:LAST:0.5:1:600
+                  RRA:LAST:0.5:6:600
+                  RRA:LAST:0.5:24:600
+                  RRA:LAST:0.5:288:600'
 
         graphs:
           Junction Status:
@@ -384,6 +407,7 @@ device_classes:
             graphpoints:
               status:
                 dpName: status_status
+                cFunc: LAST
 
       ISAMJunctionServer:
         datasources:
@@ -395,6 +419,17 @@ device_classes:
             datapoints:
               status:
                 rrdtype: GAUGE
+                createCmd: 'RRA:AVERAGE:0.5:1:600
+                  RRA:AVERAGE:0.5:6:600
+                  RRA:AVERAGE:0.5:24:600
+                  RRA:AVERAGE:0.5:288:600
+                  RRA:MAX:0.5:6:600
+                  RRA:MAX:0.5:24:600
+                  RRA:MAX:0.5:288:600
+                  RRA:LAST:0.5:1:600
+                  RRA:LAST:0.5:6:600
+                  RRA:LAST:0.5:24:600
+                  RRA:LAST:0.5:288:600'
 
         graphs:
           Junction Server Status:
@@ -406,6 +441,7 @@ device_classes:
             graphpoints:
               status:
                 dpName: status_status
+                cFunc: LAST
 
       ISAMInterface:
         datasources:
