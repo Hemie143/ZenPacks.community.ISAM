@@ -1,15 +1,17 @@
 # stdlib Imports
+import base64
 import json
-
-# Twisted Imports
-from twisted.internet.defer import inlineCallbacks, returnValue, DeferredSemaphore, DeferredList
-from twisted.web.client import getPage
 
 # Zenoss Imports
 from Products.DataCollector.plugins.CollectorPlugin import PythonPlugin
 from Products.DataCollector.plugins.DataMaps import ObjectMap, RelationshipMap
+from ZenPacks.community.DataPower.lib.utils import SkipCertifContextFactory
 
-import base64
+# Twisted Imports
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.web.client import Agent, readBody
+from twisted.web.http_headers import Headers
 
 
 class ISAMModeler(PythonPlugin):
@@ -28,10 +30,6 @@ class ISAMModeler(PythonPlugin):
         ['storage', 'https://{}/statistics/systems/storage.json?timespan=600s'],
         ]
 
-    @staticmethod
-    def add_tag(result, label):
-        return tuple((label, result))
-
     @inlineCallbacks
     def collect(self, device, log):
         log.debug('{}: Modeling collect'.format(device.id))
@@ -46,28 +44,22 @@ class ISAMModeler(PythonPlugin):
 
         basicAuth = base64.encodestring('{}:{}'.format(username, password))
         authHeader = "Basic " + basicAuth.strip()
+        headers = {
+            "Accept": ["application/json"],
+            "Authorization": [authHeader],
+            "User-Agent": ["Mozilla/3.0Gold"],
+        }
+        agent = Agent(reactor, contextFactory=SkipCertifContextFactory())
+        results = {}
+        for component, url_pattern in self.components:
+            url = url_pattern.format(ip_address)
+            try:
+                response = yield agent.request('GET', url, Headers(headers))
+                response_body = yield readBody(response)
+                results[component] = json.loads(response_body)
+            except Exception as e:
+                log.error('{}: {}'.format(device.id, e))
 
-        deferreds = []
-        sem = DeferredSemaphore(1)
-        for comp in self.components:
-            url = comp[1].format(ip_address)
-            d = sem.run(getPage, url,
-                        headers={
-                            "Accept": "application/json",
-                            "Authorization": authHeader,
-                            "User-Agent": "Mozilla/3.0Gold",
-                        },
-                        )
-            d.addCallback(self.add_tag, comp[0])
-            deferreds.append(d)
-
-        results = yield DeferredList(deferreds, consumeErrors=True)
-        for success, result in results:
-            if not success:
-                log.error('{}: {}'.format(device.id, result.getErrorMessage()))
-                #returnValue(None)
-
-        log.debug('Collected: {}'.format(results))
         returnValue(results)
 
     def process(self, device, results, log):
@@ -79,25 +71,18 @@ class ISAMModeler(PythonPlugin):
             - A list of RelationshipMaps and ObjectMaps, both
         """
 
-        self.result_data = {}
-        for success, result in results:
-            if success:
-                if result[1]:
-                    content = json.loads(result[1])
-                else:
-                    content = {}
-                self.result_data[result[0]] = content
-
         maps = []
-        maps.extend(self.get_reverse_proxies(log))
-        maps.append(self.get_ifaces(log))
-        maps.append(self.get_filesystems(log))
+        if 'health' in results:
+            maps.extend(self.get_reverse_proxies(results['health'], log))
+        if 'ifaces' in results:
+            maps.append(self.get_ifaces(results['ifaces'], log))
+        if 'storage' in results:
+            maps.append(self.get_filesystems(results['storage'], log))
 
         log.debug('{}: process maps:{}'.format(device.id, maps))
         return maps
 
-    def get_reverse_proxies(self, log):
-        data = self.result_data.get('health', '')
+    def get_reverse_proxies(self, data, log):
         if data:
             data = data.get('items', '')
         else:
@@ -153,8 +138,8 @@ class ISAMModeler(PythonPlugin):
         rm.extend(rm_jservers)
         return rm
 
-    def get_ifaces(self, log):
-        data = self.result_data.get('ifaces', '')
+    def get_ifaces(self, data, log):
+        # data = self.result_data.get('ifaces', '')
         if data:
             data = data.get('interfaces', '')
         else:
@@ -178,8 +163,8 @@ class ISAMModeler(PythonPlugin):
                              objmaps=if_maps)
         return rm
 
-    def get_filesystems(self, log):
-        data = self.result_data.get('storage', '')
+    def get_filesystems(self, data, log):
+        # data = self.result_data.get('storage', '')
         if not data:
             return []
         fs_maps = []
