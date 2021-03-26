@@ -107,8 +107,8 @@ class JSStatus(ISAMJunctionServer):
                         junction_label = '{}/{}'.format(junction_id, jserver['name'])
                         component = prepId('{}_{}_{}'.format(r_proxy_id, junction_id, jserver['name']))
                         junction_field = junction_id
-                    value = float(jserver['health'])
-                    data['values'][component]['status'] = (value, 'N')
+                    value = int(jserver['health'])
+                    data['values'][component]['jsstatus_jsstatus'] = value
                     data['events'].append({
                         'device': config.id,
                         'component': component,

@@ -27,16 +27,6 @@ classes:
   ISAMReverseProxy:
     base: [zenpacklib.Component]
     label: ISAM Reverse Proxy
-    properties:
-      status:
-        type: string
-        label: Status
-      started:
-        type: string
-        label: Started
-      enabled:
-        type: string
-        label: Enabled
 
   ISAMJunction:
     base: [zenpacklib.Component]
@@ -208,6 +198,7 @@ event_classes:
           # Waited for delay, set it to measured severity
           evt.severity = evt.measured_severity
 
+
 device_classes:
   /Security/ISAM:
     zProperties:
@@ -313,135 +304,74 @@ device_classes:
 
       ISAMReverseProxy:
         datasources:
-          status:
+          rpstatus:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMReverseProxy.RPStatus
             cycletime: 60
-
             datapoints:
-              status:
+              rpstatus:
                 rrdtype: GAUGE
-                createCmd: 'RRA:AVERAGE:0.5:1:600
-                  RRA:AVERAGE:0.5:6:600
-                  RRA:AVERAGE:0.5:24:600
-                  RRA:AVERAGE:0.5:288:600
-                  RRA:MAX:0.5:6:600
-                  RRA:MAX:0.5:24:600
-                  RRA:MAX:0.5:288:600
-                  RRA:LAST:0.5:1:600
-                  RRA:LAST:0.5:6:600
-                  RRA:LAST:0.5:24:600
-                  RRA:LAST:0.5:288:600'
-
-          throughput:
+          rpthroughput:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMReverseProxy.RPThroughput
             cycletime: 600
-
             datapoints:
               requests:
                 rrdtype: GAUGE
-                createCmd: 'RRA:AVERAGE:0.5:1:600
-                  RRA:AVERAGE:0.5:6:600
-                  RRA:AVERAGE:0.5:24:600
-                  RRA:AVERAGE:0.5:288:600
-                  RRA:MAX:0.5:6:600
-                  RRA:MAX:0.5:24:600
-                  RRA:MAX:0.5:288:600
-                  RRA:LAST:0.5:1:600
-                  RRA:LAST:0.5:6:600
-                  RRA:LAST:0.5:24:600
-                  RRA:LAST:0.5:288:600'
-
         graphs:
           Reverse Proxy Status:
             width: 1000
             miny: 0
             maxy: 2
             comments: [0=Healthy - 1=Warning - 2=Unhealthy]
-
             graphpoints:
               status:
-                dpName: status_status
-                cFunc: LAST
-
+                dpName: rpstatus_rpstatus
           Throughput:
             units: requests/min
             width: 1000
             miny: 0
-
             graphpoints:
               requests:
-                dpName: throughput_requests
-                cFunc: LAST
+                dpName: rpthroughput_requests
 
       ISAMJunction:
         datasources:
-          status:
+          jstatus:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMJunction.JStatus
             cycletime: 60
-
             datapoints:
-              status:
+              jstatus:
                 rrdtype: GAUGE
-                createCmd: 'RRA:AVERAGE:0.5:1:600
-                  RRA:AVERAGE:0.5:6:600
-                  RRA:AVERAGE:0.5:24:600
-                  RRA:AVERAGE:0.5:288:600
-                  RRA:MAX:0.5:6:600
-                  RRA:MAX:0.5:24:600
-                  RRA:MAX:0.5:288:600
-                  RRA:LAST:0.5:1:600
-                  RRA:LAST:0.5:6:600
-                  RRA:LAST:0.5:24:600
-                  RRA:LAST:0.5:288:600'
-
         graphs:
           Junction Status:
             width: 1000
             miny: 0
             maxy: 2
             comments: [0=Healthy - 1=Warning - 2=Unhealthy]
-
             graphpoints:
               status:
-                dpName: status_status
-                cFunc: LAST
+                dpName: jstatus_jstatus
 
       ISAMJunctionServer:
         datasources:
-          status:
+          jsstatus:
             type: Python
             plugin_classname: ZenPacks.community.ISAM.dsplugins.ISAMJunctionServer.JSStatus
             cycletime: 60
-
             datapoints:
-              status:
+              jsstatus:
                 rrdtype: GAUGE
-                createCmd: 'RRA:AVERAGE:0.5:1:600
-                  RRA:AVERAGE:0.5:6:600
-                  RRA:AVERAGE:0.5:24:600
-                  RRA:AVERAGE:0.5:288:600
-                  RRA:MAX:0.5:6:600
-                  RRA:MAX:0.5:24:600
-                  RRA:MAX:0.5:288:600
-                  RRA:LAST:0.5:1:600
-                  RRA:LAST:0.5:6:600
-                  RRA:LAST:0.5:24:600
-                  RRA:LAST:0.5:288:600'
-
         graphs:
           Junction Server Status:
             width: 1000
             miny: 0
             maxy: 2
             comments: [0=Healthy - 1=Warning - 2=Unhealthy]
-
             graphpoints:
               status:
-                dpName: status_status
-                cFunc: LAST
+                dpName: jsstatus_jsstatus
 
       ISAMInterface:
         datasources:

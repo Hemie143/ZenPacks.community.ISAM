@@ -99,7 +99,8 @@ class RPStatus(ISAMReverseProxy):
         for rproxy in items:
             component = prepId(rproxy['name'])
             value = int(rproxy['health'])
-            data['values'][component]['status'] = (float(value), 'N')
+            # data['values'][component]['status'] = (float(value), 'N')
+            data['values'][component]['rpstatus_rpstatus'] = value
             data['events'].append({
                 'device': config.id,
                 'component': component,
@@ -148,7 +149,7 @@ class RPThroughput(ISAMReverseProxy):
             # this means that the current window has its value reset every 10 minutes
             records = rproxy['records']
             if records == 0:
-                data['values'][component]['requests'] = (0, 'N')
+                data['values'][component]['rpthroughput_requests'] = 0
             elif len(records) == 1:
                 log.error('onSuccess: records not a list: {}'.format(recods))
             else:
@@ -156,7 +157,8 @@ class RPThroughput(ISAMReverseProxy):
                     poll_time = float(poll['t'])
                     if poll_time == prev_window_start:
                         # Divide value by cycletime and multiply by 60 to get number of requests per minute
-                        data['values'][component]['requests'] = (float(poll['e'])/cycletime*60, current_window_start)
+                        data['values'][component]['rpthroughput_requests'] = (float(poll['e'])/cycletime*60,
+                                                                              current_window_start)
                         break
 
         log.debug('RPThroughput data: {}'.format(data))

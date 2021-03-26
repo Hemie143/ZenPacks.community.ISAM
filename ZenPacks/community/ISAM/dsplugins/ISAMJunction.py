@@ -93,14 +93,13 @@ class JStatus(ISAMJunction):
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
         map_status = {0: [0, 'OK'], 1: [3, 'unhealthy'], 2: [5, 'in failure']}
-        # result = json.loads(result)
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:
             for junction in rproxy.get('children', []):
                 component = prepId('{}_{}'.format(rproxy['name'], junction['name']))
                 value = int(junction['health'])
-                data['values'][component]['status'] = (float(value), 'N')
+                data['values'][component]['jstatus_jstatus'] = value
                 data['events'].append({
                     'device': config.id,
                     'component': component,
