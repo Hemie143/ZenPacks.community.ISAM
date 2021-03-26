@@ -1,16 +1,18 @@
 
 # stdlib Imports
+import base64
 import json
 import logging
-import base64
-import time
-
-# Twisted Imports
-from twisted.internet.defer import returnValue
-from twisted.web.client import getPage
 
 # Zenoss imports
 from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonDataSourcePlugin
+from ZenPacks.community.DataPower.lib.utils import SkipCertifContextFactory
+
+# Twisted Imports
+from twisted.internet import reactor
+from twisted.internet.defer import returnValue, inlineCallbacks
+from twisted.web.client import Agent, readBody
+from twisted.web.http_headers import Headers
 
 # Setup logging
 log = logging.getLogger('zen.PythonISAMFileSystem')
@@ -44,6 +46,7 @@ class ISAMFileSystem(PythonDataSourcePlugin):
         log.debug(' params is {}'.format(params))
         return params
 
+    @inlineCallbacks
     def collect(self, config):
         log.debug('Starting ISAMFileSystem collect')
 
@@ -56,20 +59,24 @@ class ISAMFileSystem(PythonDataSourcePlugin):
         url = 'https://{}/statistics/systems/storage.json?timespan={}'.format(ip_address, 3*cycletime)
         basicAuth = base64.encodestring('{}:{}'.format(ds0.zISAMUsername, ds0.zISAMPassword))
         authHeader = "Basic " + basicAuth.strip()
-        log.debug('authHeader: {}'.format(authHeader))
-        d = getPage(url,
-                    headers={
-                        "Accept": "application/json",
-                        "Authorization": authHeader,
-                        "User-Agent": "Mozilla/3.0Gold",
-                        }
-                    )
-        return d
+        headers = {
+            "Accept": ["application/json"],
+            "Authorization": [authHeader],
+            "User-Agent": ["Mozilla/3.0Gold"],
+        }
+        agent = Agent(reactor, contextFactory=SkipCertifContextFactory())
+        results = {}
+        try:
+            response = yield agent.request('GET', url, Headers(headers))
+            response_body = yield readBody(response)
+            results = json.loads(response_body)
+        except Exception as e:
+            log.error('{}: {}'.format(datasource, e))
+        returnValue(results)
 
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
 
-        result = json.loads(result)
         data = self.new_data()
         default_fs = ['root', 'boot']
         for fs in default_fs:
