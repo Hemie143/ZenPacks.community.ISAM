@@ -1,18 +1,19 @@
 
 # stdlib Imports
+import base64
 import json
 import logging
-import base64
-import time
-from random import randint
-
-# Twisted Imports
-from twisted.internet.defer import returnValue
-from twisted.web.client import getPage
 
 # Zenoss imports
-from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonDataSourcePlugin
 from Products.ZenUtils.Utils import prepId
+from ZenPacks.community.DataPower.lib.utils import SkipCertifContextFactory
+from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonDataSourcePlugin
+
+# Twisted Imports
+from twisted.internet import reactor
+from twisted.internet.defer import returnValue, inlineCallbacks
+from twisted.web.client import Agent, readBody
+from twisted.web.http_headers import Headers
 
 # Setup logging
 log = logging.getLogger('zen.PythonISAMJunctionServer')
@@ -49,6 +50,7 @@ class ISAMJunctionServer(PythonDataSourcePlugin):
         log.debug(' params is %s \n' % (params))
         return params
 
+    @inlineCallbacks
     def collect(self, config):
         log.debug('Starting ISAMJunctionServer collect')
 
@@ -56,14 +58,20 @@ class ISAMJunctionServer(PythonDataSourcePlugin):
         url = self.ws_url_get(config)
         basicAuth = base64.encodestring('{}:{}'.format(ds0.zISAMUsername, ds0.zISAMPassword))
         authHeader = "Basic " + basicAuth.strip()
-        d = getPage(url,
-                    headers={
-                        "Accept": "application/json",
-                        "Authorization": authHeader,
-                        "User-Agent": "Mozilla/3.0Gold",
-                        }
-                    )
-        return d
+        headers = {
+            "Accept": ["application/json"],
+            "Authorization": [authHeader],
+            "User-Agent": ["Mozilla/3.0Gold"],
+        }
+        agent = Agent(reactor, contextFactory=SkipCertifContextFactory())
+        results = {}
+        try:
+            response = yield agent.request('GET', url, Headers(headers))
+            response_body = yield readBody(response)
+            results = json.loads(response_body)
+        except Exception as e:
+            log.error('{}: {}'.format(ds0, e))
+        returnValue(results)
 
     def onError(self, result, config):
         log.error('Error - result is {}'.format(result))
@@ -84,7 +92,6 @@ class JSStatus(ISAMJunctionServer):
     def onSuccess(self, result, config):
         log.debug('Success - result is {}'.format(result))
         map_status = {0: [0, 'OK'], 1: [3, 'unhealthy'], 2: [5, 'in failure']}
-        result = json.loads(result)
         items = result.get('items')
         data = self.new_data()
         for rproxy in items:

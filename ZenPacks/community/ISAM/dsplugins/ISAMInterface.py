@@ -1,8 +1,8 @@
 
 # stdlib Imports
+import base64
 import json
 import logging
-import base64
 import time
 
 # Zenoss imports
@@ -10,11 +10,10 @@ from ZenPacks.zenoss.PythonCollector.datasources.PythonDataSource import PythonD
 from ZenPacks.community.DataPower.lib.utils import SkipCertifContextFactory
 
 # Twisted Imports
-from twisted.internet.defer import returnValue, DeferredSemaphore, DeferredList, inlineCallbacks
-from twisted.web.client import getPage, Agent, readBody
 from twisted.internet import reactor
+from twisted.internet.defer import returnValue, inlineCallbacks
+from twisted.web.client import Agent, readBody
 from twisted.web.http_headers import Headers
-
 
 # Setup logging
 log = logging.getLogger('zen.PythonISAMInterface')
